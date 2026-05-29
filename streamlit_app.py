@@ -14,6 +14,7 @@ except Exception:
 
 from app.domain.enums import StatusUsuario  # noqa: E402
 from app.ui import session as sess  # noqa: E402
+from app.ui.theme import aplicar_tema  # noqa: E402
 from app.ui.views import (  # noqa: E402
     admin,
     aposta_final,
@@ -27,6 +28,8 @@ from app.ui.views import (  # noqa: E402
     ranking,
     tela_partida,
 )
+
+aplicar_tema()
 
 usuario = sess.current_user()
 
@@ -55,6 +58,8 @@ else:
 
 if usuario is not None:
     with st.sidebar:
+        st.markdown("### 🏆 Bolão Charlão")
+        st.caption("Copa do Mundo FIFA 2026")
         st.markdown(f"👤 **{usuario.apelido}**")
         if st.button("Sair", use_container_width=True):
             sess.logout_session()
