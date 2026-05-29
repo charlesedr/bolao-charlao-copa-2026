@@ -18,11 +18,14 @@ from app.ui.views import (  # noqa: E402
     admin,
     aposta_final,
     cadastro,
+    comparar,
     login,
     minha_copa,
     palpites,
     pendente,
+    perfil,
     ranking,
+    tela_partida,
 )
 
 usuario = sess.current_user()
@@ -43,6 +46,9 @@ else:
         st.Page(minha_copa.render, title="Minha Copa", icon="🌎", url_path="minha-copa"),
         st.Page(aposta_final.render, title="Aposta Final", icon="🏅", url_path="aposta-final"),
         st.Page(ranking.render, title="Ranking", icon="🏆", url_path="ranking"),
+        st.Page(tela_partida.render, title="Tela da Partida", icon="📋", url_path="partida"),
+        st.Page(comparar.render, title="Comparar", icon="⚔️", url_path="comparar"),
+        st.Page(perfil.render, title="Perfil", icon="👤", url_path="perfil"),
     ]
     if usuario.is_admin:
         paginas.append(st.Page(admin.render, title="Admin", icon="🛠️", url_path="admin"))
