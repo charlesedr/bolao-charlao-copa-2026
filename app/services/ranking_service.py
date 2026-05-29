@@ -34,7 +34,7 @@ def ranking(session: Session) -> list[dict]:
     )
 
     usuarios = session.exec(
-        select(Usuario).where(Usuario.status == StatusUsuario.APROVADO)
+        select(Usuario).where(Usuario.status == StatusUsuario.APROVADO).order_by(Usuario.id)
     ).all()
 
     linhas = []
@@ -51,16 +51,17 @@ def ranking(session: Session) -> list[dict]:
             }
         )
 
-    # Desempate: pontos -> placares exatos -> resultados -> gols -> apelido
+    # Desempate: pontos -> placares exatos -> resultados -> gols.
+    # Sem critério final por apelido: empate total = MESMA posição (1º, 2º, 2º, 4º...).
     linhas.sort(
-        key=lambda r: (
-            -r["pontos"],
-            -r["placares_exatos"],
-            -r["resultados"],
-            -r["gols"],
-            r["apelido"].lower(),
-        )
+        key=lambda r: (-r["pontos"], -r["placares_exatos"], -r["resultados"], -r["gols"])
     )
-    for i, linha in enumerate(linhas, start=1):
-        linha["posicao"] = i
+    posicao = 0
+    chave_anterior = None
+    for i, linha in enumerate(linhas):
+        chave = (linha["pontos"], linha["placares_exatos"], linha["resultados"], linha["gols"])
+        if chave != chave_anterior:
+            posicao = i + 1
+            chave_anterior = chave
+        linha["posicao"] = posicao
     return linhas

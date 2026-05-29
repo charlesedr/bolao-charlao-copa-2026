@@ -95,7 +95,8 @@ do jogo de disputa do 3º lugar**.
         """
 - **Ranking:** classificação geral. Critérios de desempate, nesta ordem:
   **1)** pontos · **2)** placares exatos acertados · **3)** resultados acertados ·
-  **4)** gols acertados (mandante + visitante) · **5)** apelido.
+  **4)** gols acertados (mandante + visitante). Se ainda assim houver empate total,
+  os participantes **dividem a mesma posição**.
 - **Tela da Partida:** veja o palpite e os pontos de **todos os participantes** em cada jogo
   (os palpites dos outros só aparecem **depois que o jogo começa**, para ninguém colar 😉).
 - **Comparar** e **Perfil:** compare sua pontuação com a de outro participante e veja perfis.
