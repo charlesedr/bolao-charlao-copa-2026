@@ -16,8 +16,10 @@ from app.domain.enums import StatusUsuario  # noqa: E402
 from app.ui import session as sess  # noqa: E402
 from app.ui.views import (  # noqa: E402
     admin,
+    aposta_final,
     cadastro,
     login,
+    minha_copa,
     palpites,
     pendente,
     ranking,
@@ -38,6 +40,8 @@ elif usuario.status != StatusUsuario.APROVADO:
 else:
     paginas = [
         st.Page(palpites.render, title="Palpites", icon="⚽", url_path="palpites", default=True),
+        st.Page(minha_copa.render, title="Minha Copa", icon="🌎", url_path="minha-copa"),
+        st.Page(aposta_final.render, title="Aposta Final", icon="🏅", url_path="aposta-final"),
         st.Page(ranking.render, title="Ranking", icon="🏆", url_path="ranking"),
     ]
     if usuario.is_admin:

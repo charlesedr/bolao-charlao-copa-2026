@@ -3,7 +3,7 @@ from sqlmodel import Session
 
 from app.domain.enums import FasePartida, StatusPartida
 from app.repositories import admin_log_repo, bet_repo, match_repo
-from app.services import scoring_service
+from app.services import aposta_service, bracket_service, scoring_service
 
 
 def lancar_placar(
@@ -64,6 +64,15 @@ def lancar_placar(
     )
     session.commit()
     recalcular_partida(session, partida_id)
+
+    # Mata-mata finalizado → propaga vencedor/perdedor para o próximo jogo da chave
+    if is_mata_mata and status == StatusPartida.FINALIZADO:
+        bracket_service.avancar(session, partida_id)
+
+    # Final ou disputa de 3º → recalcula a aposta de classificação final
+    if partida.fase in (FasePartida.FINAL, FasePartida.DISPUTA_3O):
+        aposta_service.calcular_apostas(session)
+
     return True, "Resultado salvo e pontuação recalculada."
 
 
