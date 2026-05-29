@@ -1,0 +1,17 @@
+[project]
+name = "bolao-charlao-copa-2026"
+version = "0.1.0"
+description = "Bolão da Copa do Mundo FIFA 2026 — plataforma gratuita em Python/Streamlit"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app/services"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true

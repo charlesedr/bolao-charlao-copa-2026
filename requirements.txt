@@ -1,0 +1,12 @@
+streamlit~=1.41
+streamlit-cookies-controller~=0.0.4
+sqlmodel~=0.0.22
+psycopg[binary]~=3.2
+alembic~=1.14
+pydantic~=2.10
+pydantic-settings~=2.7
+bcrypt~=4.2
+pyjwt~=2.10
+email-validator~=2.2
+pandas~=2.2
+python-dotenv~=1.0

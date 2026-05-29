@@ -1,0 +1,33 @@
+codigo;fase;data_brasilia;hora_brasilia;slot_mandante;slot_visitante;origem_mandante;tipo_mandante;origem_visitante;tipo_visitante;estadio;cidade
+73;32avos;28/06/2026;16:00;2A;2B;;;;;SoFi Stadium;Inglewood
+74;32avos;29/06/2026;17:30;1E;3:A/B/C/D/F;;;;;Gillette Stadium;Foxborough
+75;32avos;29/06/2026;22:00;1F;2C;;;;;Estadio BBVA;Guadalupe
+76;32avos;29/06/2026;14:00;1C;2F;;;;;NRG Stadium;Houston
+77;32avos;30/06/2026;18:00;1I;3:C/D/F/G/H;;;;;MetLife Stadium;East Rutherford
+78;32avos;30/06/2026;14:00;2E;2I;;;;;AT&T Stadium;Arlington
+79;32avos;30/06/2026;22:00;1A;3:C/E/F/H/I;;;;;Estadio Azteca;Mexico City
+80;32avos;01/07/2026;13:00;1L;3:E/H/I/J/K;;;;;Mercedes-Benz Stadium;Atlanta
+81;32avos;01/07/2026;21:00;1D;3:B/E/F/I/J;;;;;Levi's Stadium;Santa Clara
+82;32avos;01/07/2026;17:00;1G;3:A/E/H/I/J;;;;;Lumen Field;Seattle
+83;32avos;02/07/2026;20:00;2K;2L;;;;;BMO Field;Toronto
+84;32avos;02/07/2026;16:00;1H;2J;;;;;SoFi Stadium;Inglewood
+85;32avos;03/07/2026;00:00;1B;3:E/F/G/I/J;;;;;BC Place;Vancouver
+86;32avos;03/07/2026;19:00;1J;2H;;;;;Hard Rock Stadium;Miami Gardens
+87;32avos;03/07/2026;22:30;1K;3:D/E/I/J/L;;;;;Arrowhead Stadium;Kansas City
+88;32avos;03/07/2026;15:00;2D;2G;;;;;AT&T Stadium;Arlington
+89;oitavas;04/07/2026;18:00;V74;V77;74;vencedor;77;vencedor;Lincoln Financial Field;Philadelphia
+90;oitavas;04/07/2026;14:00;V73;V75;73;vencedor;75;vencedor;NRG Stadium;Houston
+91;oitavas;05/07/2026;17:00;V76;V78;76;vencedor;78;vencedor;MetLife Stadium;East Rutherford
+92;oitavas;05/07/2026;21:00;V79;V80;79;vencedor;80;vencedor;Estadio Azteca;Mexico City
+93;oitavas;06/07/2026;16:00;V83;V84;83;vencedor;84;vencedor;AT&T Stadium;Arlington
+94;oitavas;06/07/2026;21:00;V81;V82;81;vencedor;82;vencedor;Lumen Field;Seattle
+95;oitavas;07/07/2026;13:00;V86;V88;86;vencedor;88;vencedor;Mercedes-Benz Stadium;Atlanta
+96;oitavas;07/07/2026;17:00;V85;V87;85;vencedor;87;vencedor;BC Place;Vancouver
+97;quartas;09/07/2026;17:00;V89;V90;89;vencedor;90;vencedor;Gillette Stadium;Foxborough
+98;quartas;10/07/2026;16:00;V93;V94;93;vencedor;94;vencedor;SoFi Stadium;Inglewood
+99;quartas;11/07/2026;18:00;V91;V92;91;vencedor;92;vencedor;Hard Rock Stadium;Miami Gardens
+100;quartas;11/07/2026;22:00;V95;V96;95;vencedor;96;vencedor;Arrowhead Stadium;Kansas City
+101;semifinal;14/07/2026;16:00;V97;V98;97;vencedor;98;vencedor;AT&T Stadium;Arlington
+102;semifinal;15/07/2026;16:00;V99;V100;99;vencedor;100;vencedor;Mercedes-Benz Stadium;Atlanta
+103;disputa_3o;18/07/2026;18:00;P101;P102;101;perdedor;102;perdedor;Hard Rock Stadium;Miami Gardens
+104;final;19/07/2026;16:00;V101;V102;101;vencedor;102;vencedor;MetLife Stadium;East Rutherford

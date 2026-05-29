@@ -1,0 +1,49 @@
+codigo_fifa;nome;nome_pt;grupo;confederacao
+MEX;Mexico;México;A;CONCACAF
+RSA;South Africa;África do Sul;A;CAF
+KOR;South Korea;Coreia do Sul;A;AFC
+CZE;Czech Republic;Tchéquia;A;UEFA
+CAN;Canada;Canadá;B;CONCACAF
+BIH;Bosnia and Herzegovina;Bósnia e Herzegovina;B;UEFA
+QAT;Qatar;Catar;B;AFC
+SUI;Switzerland;Suíça;B;UEFA
+HAI;Haiti;Haiti;C;CONCACAF
+SCO;Scotland;Escócia;C;UEFA
+BRA;Brazil;Brasil;C;CONMEBOL
+MAR;Morocco;Marrocos;C;CAF
+USA;United States;Estados Unidos;D;CONCACAF
+PAR;Paraguay;Paraguai;D;CONMEBOL
+AUS;Australia;Austrália;D;AFC
+TUR;Turkey;Turquia;D;UEFA
+CIV;Côte d'Ivoire;Costa do Marfim;E;CAF
+ECU;Ecuador;Equador;E;CONMEBOL
+GER;Germany;Alemanha;E;UEFA
+CUW;Curaçao;Curaçao;E;CONCACAF
+NED;Netherlands;Países Baixos;F;UEFA
+JPN;Japan;Japão;F;AFC
+SWE;Sweden;Suécia;F;UEFA
+TUN;Tunisia;Tunísia;F;CAF
+IRN;Iran;Irã;G;AFC
+NZL;New Zealand;Nova Zelândia;G;OFC
+BEL;Belgium;Bélgica;G;UEFA
+EGY;Egypt;Egito;G;CAF
+KSA;Saudi Arabia;Arábia Saudita;H;AFC
+URU;Uruguay;Uruguai;H;CONMEBOL
+ESP;Spain;Espanha;H;UEFA
+CPV;Cape Verde;Cabo Verde;H;CAF
+FRA;France;França;I;UEFA
+SEN;Senegal;Senegal;I;CAF
+IRQ;Iraq;Iraque;I;AFC
+NOR;Norway;Noruega;I;UEFA
+ARG;Argentina;Argentina;J;CONMEBOL
+ALG;Algeria;Argélia;J;CAF
+AUT;Austria;Áustria;J;UEFA
+JOR;Jordan;Jordânia;J;AFC
+POR;Portugal;Portugal;K;UEFA
+COD;DR Congo;RD Congo;K;CAF
+UZB;Uzbekistan;Uzbequistão;K;AFC
+COL;Colombia;Colômbia;K;CONMEBOL
+GHA;Ghana;Gana;L;CAF
+PAN;Panama;Panamá;L;CONCACAF
+ENG;England;Inglaterra;L;UEFA
+CRO;Croatia;Croácia;L;UEFA

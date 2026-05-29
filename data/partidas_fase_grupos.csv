@@ -1,0 +1,73 @@
+codigo;grupo;data_brasilia;hora_brasilia;mandante;visitante;estadio;cidade
+1;A;11/06/2026;16:00;MEX;RSA;Estadio Azteca;Mexico City
+2;A;11/06/2026;23:00;KOR;CZE;Estadio Akron;Zapopan
+3;B;12/06/2026;16:00;CAN;BIH;BMO Field;Toronto
+4;D;12/06/2026;22:00;USA;PAR;SoFi Stadium;Inglewood
+5;C;13/06/2026;22:00;HAI;SCO;Gillette Stadium;Foxborough
+6;D;14/06/2026;01:00;AUS;TUR;BC Place;Vancouver
+7;C;13/06/2026;19:00;BRA;MAR;MetLife Stadium;East Rutherford
+8;B;13/06/2026;16:00;QAT;SUI;Levi's Stadium;Santa Clara
+9;E;14/06/2026;20:00;CIV;ECU;Lincoln Financial Field;Philadelphia
+10;E;14/06/2026;14:00;GER;CUW;NRG Stadium;Houston
+11;F;14/06/2026;17:00;NED;JPN;AT&T Stadium;Arlington
+12;F;14/06/2026;23:00;SWE;TUN;Estadio BBVA;Guadalupe
+13;H;15/06/2026;19:00;KSA;URU;Hard Rock Stadium;Miami Gardens
+14;H;15/06/2026;13:00;ESP;CPV;Mercedes-Benz Stadium;Atlanta
+15;G;15/06/2026;22:00;IRN;NZL;SoFi Stadium;Inglewood
+16;G;15/06/2026;16:00;BEL;EGY;Lumen Field;Seattle
+17;I;16/06/2026;16:00;FRA;SEN;MetLife Stadium;East Rutherford
+18;I;16/06/2026;19:00;IRQ;NOR;Gillette Stadium;Foxborough
+19;J;16/06/2026;22:00;ARG;ALG;Arrowhead Stadium;Kansas City
+20;J;17/06/2026;01:00;AUT;JOR;Levi's Stadium;Santa Clara
+21;L;17/06/2026;20:00;GHA;PAN;BMO Field;Toronto
+22;L;17/06/2026;17:00;ENG;CRO;AT&T Stadium;Arlington
+23;K;17/06/2026;14:00;POR;COD;NRG Stadium;Houston
+24;K;17/06/2026;23:00;UZB;COL;Estadio Azteca;Mexico City
+25;A;18/06/2026;13:00;CZE;RSA;Mercedes-Benz Stadium;Atlanta
+26;B;18/06/2026;16:00;SUI;BIH;SoFi Stadium;Inglewood
+27;B;18/06/2026;19:00;CAN;QAT;BC Place;Vancouver
+28;A;18/06/2026;22:00;MEX;KOR;Estadio Akron;Zapopan
+29;C;19/06/2026;21:30;BRA;HAI;Lincoln Financial Field;Philadelphia
+30;C;19/06/2026;19:00;SCO;MAR;Gillette Stadium;Foxborough
+31;D;20/06/2026;00:00;TUR;PAR;Levi's Stadium;Santa Clara
+32;D;19/06/2026;16:00;USA;AUS;Lumen Field;Seattle
+33;E;20/06/2026;17:00;GER;CIV;BMO Field;Toronto
+34;E;20/06/2026;21:00;ECU;CUW;Arrowhead Stadium;Kansas City
+35;F;20/06/2026;14:00;NED;SWE;NRG Stadium;Houston
+36;F;21/06/2026;01:00;TUN;JPN;Estadio BBVA;Guadalupe
+37;H;21/06/2026;19:00;URU;CPV;Hard Rock Stadium;Miami Gardens
+38;H;21/06/2026;13:00;ESP;KSA;Mercedes-Benz Stadium;Atlanta
+39;G;21/06/2026;16:00;BEL;IRN;SoFi Stadium;Inglewood
+40;G;21/06/2026;22:00;NZL;EGY;BC Place;Vancouver
+41;I;22/06/2026;21:00;NOR;SEN;MetLife Stadium;East Rutherford
+42;I;22/06/2026;18:00;FRA;IRQ;Lincoln Financial Field;Philadelphia
+43;J;22/06/2026;14:00;ARG;AUT;AT&T Stadium;Arlington
+44;J;23/06/2026;00:00;JOR;ALG;Levi's Stadium;Santa Clara
+45;L;23/06/2026;17:00;ENG;GHA;Gillette Stadium;Foxborough
+46;L;23/06/2026;20:00;PAN;CRO;BMO Field;Toronto
+47;K;23/06/2026;14:00;POR;UZB;NRG Stadium;Houston
+48;K;23/06/2026;23:00;COL;COD;Estadio Akron;Zapopan
+49;C;24/06/2026;19:00;SCO;BRA;Hard Rock Stadium;Miami Gardens
+50;C;24/06/2026;19:00;MAR;HAI;Mercedes-Benz Stadium;Atlanta
+51;B;24/06/2026;16:00;SUI;CAN;BC Place;Vancouver
+52;B;24/06/2026;16:00;BIH;QAT;Lumen Field;Seattle
+53;A;24/06/2026;22:00;CZE;MEX;Estadio Azteca;Mexico City
+54;A;24/06/2026;22:00;RSA;KOR;Estadio BBVA;Guadalupe
+55;E;25/06/2026;17:00;CUW;CIV;Lincoln Financial Field;Philadelphia
+56;E;25/06/2026;17:00;ECU;GER;MetLife Stadium;East Rutherford
+57;F;25/06/2026;20:00;JPN;SWE;AT&T Stadium;Arlington
+58;F;25/06/2026;20:00;TUN;NED;Arrowhead Stadium;Kansas City
+59;D;25/06/2026;23:00;TUR;USA;SoFi Stadium;Inglewood
+60;D;25/06/2026;23:00;PAR;AUS;Levi's Stadium;Santa Clara
+61;I;26/06/2026;16:00;NOR;FRA;Gillette Stadium;Foxborough
+62;I;26/06/2026;16:00;SEN;IRQ;BMO Field;Toronto
+63;G;27/06/2026;00:00;EGY;IRN;Lumen Field;Seattle
+64;G;27/06/2026;00:00;NZL;BEL;BC Place;Vancouver
+65;H;26/06/2026;21:00;CPV;KSA;NRG Stadium;Houston
+66;H;26/06/2026;21:00;URU;ESP;Estadio Akron;Zapopan
+67;L;27/06/2026;18:00;PAN;ENG;MetLife Stadium;East Rutherford
+68;L;27/06/2026;18:00;CRO;GHA;Lincoln Financial Field;Philadelphia
+69;J;27/06/2026;23:00;ALG;AUT;Arrowhead Stadium;Kansas City
+70;J;27/06/2026;23:00;JOR;ARG;AT&T Stadium;Arlington
+71;K;27/06/2026;20:30;COL;POR;Hard Rock Stadium;Miami Gardens
+72;K;27/06/2026;20:30;COD;UZB;Mercedes-Benz Stadium;Atlanta
