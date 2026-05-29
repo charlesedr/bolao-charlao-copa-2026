@@ -117,6 +117,7 @@ class Usuario(SQLModel, table=True):
     nome: str = Field(max_length=80)
     apelido: str = Field(sa_column=Column(String(40), unique=True, nullable=False, index=True))
     email: str = Field(sa_column=Column(String(120), unique=True, nullable=False, index=True))
+    telefone: str | None = Field(default=None, max_length=20)
     senha_hash: str = Field(max_length=255)
     status: str = Field(
         sa_column=Column(

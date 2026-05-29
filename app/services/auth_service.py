@@ -27,18 +27,28 @@ def _validar_email(email: str) -> str | None:
         return "E-mail inválido."
 
 
+def _validar_telefone(telefone: str) -> str | None:
+    digitos = re.sub(r"\D", "", telefone or "")
+    if not (10 <= len(digitos) <= 13):
+        return "Telefone inválido. Informe DDD + número (ex.: 11 91234-5678)."
+    return None
+
+
 def cadastrar(
-    session: Session, *, nome: str, apelido: str, email: str, senha: str
+    session: Session, *, nome: str, apelido: str, email: str, telefone: str, senha: str
 ) -> tuple[bool, str, Usuario | None]:
     nome = (nome or "").strip()
     apelido = (apelido or "").strip()
     email = (email or "").strip()
+    telefone = (telefone or "").strip()
 
     if not nome:
         return False, "Informe seu nome.", None
     if not APELIDO_RE.match(apelido):
         return False, "Apelido inválido (2-40 caracteres: letras, números, _ . -).", None
     if (msg := _validar_email(email)) is not None:
+        return False, msg, None
+    if (msg := _validar_telefone(telefone)) is not None:
         return False, msg, None
     if (msg := _validar_senha(senha)) is not None:
         return False, msg, None
@@ -52,6 +62,7 @@ def cadastrar(
         nome=nome,
         apelido=apelido,
         email=email,
+        telefone=telefone,
         senha_hash=hash_senha(senha),
         status=StatusUsuario.PENDENTE,
         is_admin=False,

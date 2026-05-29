@@ -1,3 +1,5 @@
+import re
+
 import streamlit as st
 from sqlmodel import Session, select
 
@@ -31,8 +33,13 @@ def _aba_usuarios(admin_id: int) -> None:
 
     for u in usuarios:
         with st.container(border=True):
-            st.markdown(f"**{u.apelido}** · {u.nome} · {u.email}")
-            st.caption(f"Status: {u.status}{' · ADMIN' if u.is_admin else ''}")
+            st.markdown(f"**{u.apelido}** · {u.nome}")
+            st.caption(f"{u.email} · Status: {u.status}{' · ADMIN' if u.is_admin else ''}")
+            if u.telefone:
+                digitos = re.sub(r"\D", "", u.telefone)
+                if len(digitos) in (10, 11):
+                    digitos = "55" + digitos
+                st.markdown(f"📱 {u.telefone} — [abrir no WhatsApp](https://wa.me/{digitos})")
             cols = st.columns(4)
             acao = None
             if u.status == StatusUsuario.PENDENTE:

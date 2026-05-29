@@ -13,8 +13,10 @@ def render() -> None:
         nome = st.text_input("Nome")
         apelido = st.text_input("Apelido (usado no ranking e no login)")
         email = st.text_input("E-mail")
+        telefone = st.text_input("Telefone/WhatsApp (com DDD)", placeholder="11 91234-5678")
         senha = st.text_input("Senha (mín. 6 caracteres)", type="password")
         senha2 = st.text_input("Confirme a senha", type="password")
+        st.caption("📱 O telefone é usado para te adicionar ao grupo do WhatsApp do bolão.")
         enviar = st.form_submit_button("Cadastrar", use_container_width=True)
 
     if enviar:
@@ -23,7 +25,7 @@ def render() -> None:
             return
         with Session(engine) as s:
             ok, msg, _ = auth_service.cadastrar(
-                s, nome=nome, apelido=apelido, email=email, senha=senha
+                s, nome=nome, apelido=apelido, email=email, telefone=telefone, senha=senha
             )
         if ok:
             st.success(msg)
