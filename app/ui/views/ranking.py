@@ -19,7 +19,12 @@ def render() -> None:
         st.info("Ainda não há participantes aprovados ou pontuações.")
         return
 
-    df = pd.DataFrame(linhas)[["posicao", "apelido", "pontos", "placares_exatos"]]
-    df.columns = ["#", "Apelido", "Pontos", "Placares exatos"]
+    df = pd.DataFrame(linhas)[
+        ["posicao", "apelido", "pontos", "placares_exatos", "resultados", "gols"]
+    ]
+    df.columns = ["#", "Apelido", "Pontos", "Placares", "Resultados", "Gols"]
     st.dataframe(df, hide_index=True, use_container_width=True)
-    st.caption("Atualiza a cada 10s. Desempate: pontos → placares exatos → apelido.")
+    st.caption(
+        "Atualiza a cada 10s. Desempate: pontos → placares exatos → "
+        "resultados acertados → gols acertados → apelido."
+    )

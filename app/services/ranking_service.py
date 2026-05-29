@@ -7,21 +7,27 @@ from app.domain.models import ApostaClassificacaoFinal, PontuacaoPartida, Usuari
 
 
 def ranking(session: Session) -> list[dict]:
-    soma_partidas = dict(
-        session.exec(
-            select(PontuacaoPartida.usuario_id, func.sum(PontuacaoPartida.pontos_total)).group_by(
-                PontuacaoPartida.usuario_id
-            )
-        ).all()
-    )
-    exatos = dict(
-        session.exec(
-            select(
-                PontuacaoPartida.usuario_id, func.sum(PontuacaoPartida.pontos_placar_exato)
-            ).group_by(PontuacaoPartida.usuario_id)
-        ).all()
-    )
-    soma_aposta = dict(
+    # Agregados por usuário a partir da pontuação das partidas
+    agregados = session.exec(
+        select(
+            PontuacaoPartida.usuario_id,
+            func.sum(PontuacaoPartida.pontos_total),
+            func.sum(PontuacaoPartida.pontos_placar_exato),
+            func.sum(PontuacaoPartida.pontos_resultado),
+            func.sum(
+                PontuacaoPartida.pontos_gols_mandante + PontuacaoPartida.pontos_gols_visitante
+            ),
+        ).group_by(PontuacaoPartida.usuario_id)
+    ).all()
+
+    pts_part, exatos, result_pts, gols = {}, {}, {}, {}
+    for uid, total, ex, res, gl in agregados:
+        pts_part[uid] = int(total or 0)
+        exatos[uid] = int(ex or 0)
+        result_pts[uid] = int(res or 0)  # 2 pontos por resultado acertado
+        gols[uid] = int(gl or 0)         # 1 ponto por gol (mandante/visitante) acertado
+
+    pts_aposta = dict(
         session.exec(
             select(ApostaClassificacaoFinal.usuario_id, ApostaClassificacaoFinal.pontos_total)
         ).all()
@@ -33,18 +39,28 @@ def ranking(session: Session) -> list[dict]:
 
     linhas = []
     for u in usuarios:
-        pontos = int(soma_partidas.get(u.id, 0) or 0) + int(soma_aposta.get(u.id, 0) or 0)
         linhas.append(
             {
                 "usuario_id": u.id,
                 "apelido": u.apelido,
                 "nome": u.nome,
-                "pontos": pontos,
-                "placares_exatos": int(exatos.get(u.id, 0) or 0),
+                "pontos": pts_part.get(u.id, 0) + int(pts_aposta.get(u.id, 0) or 0),
+                "placares_exatos": exatos.get(u.id, 0),
+                "resultados": result_pts.get(u.id, 0) // 2,  # quantidade de resultados acertados
+                "gols": gols.get(u.id, 0),                   # quantidade de gols acertados
             }
         )
-    # Desempate: pontos -> placares exatos -> apelido
-    linhas.sort(key=lambda r: (-r["pontos"], -r["placares_exatos"], r["apelido"].lower()))
+
+    # Desempate: pontos -> placares exatos -> resultados -> gols -> apelido
+    linhas.sort(
+        key=lambda r: (
+            -r["pontos"],
+            -r["placares_exatos"],
+            -r["resultados"],
+            -r["gols"],
+            r["apelido"].lower(),
+        )
+    )
     for i, linha in enumerate(linhas, start=1):
         linha["posicao"] = i
     return linhas

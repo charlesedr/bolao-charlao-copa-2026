@@ -52,8 +52,22 @@ def render() -> None:
     st.subheader("Mata-mata — até 6 pontos por jogo")
     st.markdown(
         """
-- Vale a **mesma regra dos grupos** (até 5 pontos), considerando **apenas os 90 minutos** (gols na prorrogação não contam para o placar).
-- **+1 ponto** se você acertar **quem se classifica** (mesmo que você tenha palpitado uma vitória — conta quem você indicou que avança).
+- Vale a **mesma regra dos grupos** (até 5 pontos), considerando **apenas os 90 minutos**
+  (gols na prorrogação **não** contam para o placar).
+- **+1 ponto** se você acertar **quem avança** para a próxima fase.
+
+**Como o sistema sabe quem você acha que avança?**
+- Se você palpitou a **vitória** de um time, é esse time que você indicou para passar.
+- Se você palpitou **empate**, você escolhe na hora **quem se classifica** (nos pênaltis/prorrogação).
+
+Esse ponto extra vale **independente de como o jogo foi decidido de verdade**
+(90 minutos, prorrogação ou pênaltis): o que conta é se o time que **realmente avançou**
+é o mesmo que **você indicou**.
+
+**Exemplo:** o jogo terminou **1 × 1** e o time A passou nos pênaltis.
+- Se você palpitou **vitória do A** (ex.: 2 × 1) → você indicou o A para avançar → ganha o **+1**.
+- Se você palpitou **empate e escolheu o A** → também ganha o **+1**.
+- Se você indicou o time B → não ganha o ponto de classificação.
         """
     )
 
@@ -79,7 +93,9 @@ do jogo de disputa do 3º lugar**.
     st.header("📊 Acompanhando o bolão")
     st.markdown(
         """
-- **Ranking:** classificação geral. Em caso de empate em pontos, desempata por **placares exatos** e depois por apelido.
+- **Ranking:** classificação geral. Critérios de desempate, nesta ordem:
+  **1)** pontos · **2)** placares exatos acertados · **3)** resultados acertados ·
+  **4)** gols acertados (mandante + visitante) · **5)** apelido.
 - **Tela da Partida:** veja o palpite e os pontos de **todos os participantes** em cada jogo
   (os palpites dos outros só aparecem **depois que o jogo começa**, para ninguém colar 😉).
 - **Comparar** e **Perfil:** compare sua pontuação com a de outro participante e veja perfis.
