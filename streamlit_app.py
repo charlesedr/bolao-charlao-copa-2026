@@ -1,10 +1,27 @@
+import os
+
 import streamlit as st
 
-from app.domain.enums import StatusUsuario
-from app.ui import session as sess
-from app.ui.views import admin, cadastro, login, palpites, pendente, ranking
-
 st.set_page_config(page_title="Bolão Charlão Copa 2026", page_icon="🏆", layout="centered")
+
+# Streamlit Community Cloud expõe segredos via st.secrets; replicamos para variáveis
+# de ambiente para que o pydantic-settings (app.core.config) consiga lê-los.
+try:
+    for _chave, _valor in st.secrets.items():
+        os.environ.setdefault(_chave, str(_valor))
+except Exception:
+    pass
+
+from app.domain.enums import StatusUsuario  # noqa: E402
+from app.ui import session as sess  # noqa: E402
+from app.ui.views import (  # noqa: E402
+    admin,
+    cadastro,
+    login,
+    palpites,
+    pendente,
+    ranking,
+)
 
 usuario = sess.current_user()
 
