@@ -69,6 +69,10 @@ def lancar_placar(
     if is_mata_mata and status == StatusPartida.FINALIZADO:
         bracket_service.avancar(session, partida_id)
 
+    # Último jogo da fase de grupos finalizado → preenche as 32avas automaticamente
+    if not is_mata_mata and status == StatusPartida.FINALIZADO:
+        bracket_service.resolver_32avos(session)
+
     # Final ou disputa de 3º → recalcula a aposta de classificação final
     if partida.fase in (FasePartida.FINAL, FasePartida.DISPUTA_3O):
         aposta_service.calcular_apostas(session)

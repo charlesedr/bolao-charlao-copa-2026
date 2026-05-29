@@ -8,7 +8,7 @@ from app.core.timezone import format_brt
 from app.domain.enums import FasePartida, StatusPartida, StatusUsuario
 from app.domain.models import Partida
 from app.repositories import match_repo, user_repo
-from app.services import admin_service, match_service
+from app.services import admin_service, bracket_service, match_service
 from app.ui import helpers
 from app.ui import session as sess
 
@@ -147,6 +147,11 @@ def _aba_saude(admin_id: int) -> None:
         with Session(engine) as s:
             n = match_service.recalcular_tudo(s)
         st.success(f"Recalculados {n} jogos.")
+
+    if st.button("Preencher 32avos (a partir dos grupos)"):
+        with Session(engine) as s:
+            ok, msg = bracket_service.resolver_32avos(s)
+        (st.success if ok else st.warning)(msg)
 
 
 def render() -> None:
