@@ -17,6 +17,7 @@ from app.ui import session as sess  # noqa: E402
 from app.ui.theme import aplicar_tema  # noqa: E402
 from app.ui.views import (  # noqa: E402
     admin,
+    ajuda,
     aposta_final,
     cadastro,
     comparar,
@@ -52,6 +53,7 @@ else:
         st.Page(tela_partida.render, title="Tela da Partida", icon="📋", url_path="partida"),
         st.Page(comparar.render, title="Comparar", icon="⚔️", url_path="comparar"),
         st.Page(perfil.render, title="Perfil", icon="👤", url_path="perfil"),
+        st.Page(ajuda.render, title="Como Funciona", icon="❓", url_path="ajuda"),
     ]
     if usuario.is_admin:
         paginas.append(st.Page(admin.render, title="Admin", icon="🛠️", url_path="admin"))
