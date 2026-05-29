@@ -1,4 +1,8 @@
-"""Sessão do usuário: cookie persistente (JWT) + st.session_state."""
+"""Sessão do usuário: cookie persistente (JWT) + st.session_state.
+
+Leitura do cookie via st.context.cookies (cabeçalho da requisição — confiável após F5);
+gravação/remoção via componente CookieController.
+"""
 import contextlib
 
 import streamlit as st
@@ -11,6 +15,7 @@ from app.domain.models import Usuario
 from app.repositories import user_repo
 
 COOKIE = "bolao_token"
+MAX_AGE = 7 * 24 * 3600  # 7 dias em segundos
 
 
 def _ctrl() -> CookieController:
@@ -22,7 +27,7 @@ def _ctrl() -> CookieController:
 def login_session(usuario: Usuario) -> None:
     st.session_state["user_id"] = usuario.id
     with contextlib.suppress(Exception):
-        _ctrl().set(COOKIE, criar_token(usuario.id))
+        _ctrl().set(COOKIE, criar_token(usuario.id), max_age=MAX_AGE, same_site="lax")
 
 
 def logout_session() -> None:
@@ -31,12 +36,22 @@ def logout_session() -> None:
         _ctrl().remove(COOKIE)
 
 
+def _ler_cookie() -> str | None:
+    # 1) Leitura via cabeçalho da requisição — disponível já no 1º run após F5
+    with contextlib.suppress(Exception):
+        token = st.context.cookies.get(COOKIE)
+        if token:
+            return token
+    # 2) Fallback pelo componente
+    with contextlib.suppress(Exception):
+        return _ctrl().get(COOKIE)
+    return None
+
+
 def current_user() -> Usuario | None:
     uid = st.session_state.get("user_id")
     if uid is None:
-        token = None
-        with contextlib.suppress(Exception):
-            token = _ctrl().get(COOKIE)
+        token = _ler_cookie()
         if token:
             decoded = decodificar_token(token)
             if decoded:
