@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 from sqlmodel import Session
 
@@ -22,7 +24,14 @@ def render() -> None:
             st.error(msg)
         else:
             sess.login_session(usuario)
+            # Pequeno respiro: deixa o componente de cookie flushar antes do rerun
+            time.sleep(0.6)
             st.rerun()
 
     st.divider()
     st.caption("Ainda não tem conta? Escolha **Cadastrar** no menu lateral.")
+
+    # Diagnóstico temporário: nomes de cookies visíveis pelo servidor
+    detectados = sess.cookies_detectados()
+    marca = "✅" if "bolao_token" in detectados else "❌"
+    st.caption(f"🔧 diagnóstico — cookies vistos: {detectados or '(nenhum)'} · bolao_token: {marca}")

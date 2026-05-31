@@ -56,6 +56,19 @@ def _aba_usuarios(admin_id: int) -> None:
             if cols[3].button("Resetar senha", key=f"rs_{u.id}"):
                 acao = ("reset", u.id)
 
+            # Excluir (apenas reprovado/bloqueado, com confirmação dupla)
+            if not u.is_admin and u.status in (
+                StatusUsuario.REPROVADO, StatusUsuario.BLOQUEADO,
+            ):
+                conf_key = f"conf_del_{u.id}"
+                rotulo = "Confirmar exclusão?" if st.session_state.get(conf_key) else "🗑️ Excluir"
+                if cols[2].button(rotulo, key=f"del_{u.id}"):
+                    if st.session_state.pop(conf_key, False):
+                        acao = ("excluir", u.id)
+                    else:
+                        st.session_state[conf_key] = True
+                        st.rerun()
+
             if acao:
                 nome_acao, uid = acao
                 with Session(engine) as s:
@@ -65,6 +78,7 @@ def _aba_usuarios(admin_id: int) -> None:
                         "bloquear": admin_service.bloquear,
                         "desbloquear": admin_service.desbloquear,
                         "reset": admin_service.resetar_senha,
+                        "excluir": admin_service.excluir_usuario,
                     }[nome_acao]
                     ok, msg = fn(s, admin_id=admin_id, usuario_id=uid)
                 if ok:

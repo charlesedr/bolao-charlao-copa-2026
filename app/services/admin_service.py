@@ -1,10 +1,16 @@
 """Ações administrativas sobre usuários."""
 import secrets
 
-from sqlmodel import Session
+from sqlmodel import Session, delete
 
 from app.core.security import hash_senha
 from app.domain.enums import StatusUsuario
+from app.domain.models import (
+    ApostaClassificacaoFinal,
+    DesempatePalpiteUsuario,
+    Palpite,
+    PontuacaoPartida,
+)
 from app.repositories import admin_log_repo, user_repo
 
 
@@ -44,6 +50,33 @@ def bloquear(session, *, admin_id, usuario_id):
 def desbloquear(session, *, admin_id, usuario_id):
     return _mudar_status(session, admin_id=admin_id, usuario_id=usuario_id,
                          novo_status=StatusUsuario.APROVADO, acao="desbloquear_usuario")
+
+
+def excluir_usuario(
+    session: Session, *, admin_id: int, usuario_id: int
+) -> tuple[bool, str]:
+    """Exclui um usuário (não-admin) e seus dados relacionados.
+
+    Libera o e-mail/apelido para um eventual novo cadastro. Permitido apenas para
+    usuários com status REPROVADO ou BLOQUEADO (evita exclusão acidental de ativos).
+    """
+    usuario = user_repo.get_by_id(session, usuario_id)
+    if usuario is None:
+        return False, "Usuário não encontrado."
+    if usuario.is_admin:
+        return False, "Não é possível excluir um administrador."
+    if usuario.status not in (StatusUsuario.REPROVADO, StatusUsuario.BLOQUEADO):
+        return False, "Só é possível excluir usuários reprovados ou bloqueados."
+
+    for tabela in (Palpite, PontuacaoPartida, ApostaClassificacaoFinal, DesempatePalpiteUsuario):
+        session.exec(delete(tabela).where(tabela.usuario_id == usuario_id))
+    admin_log_repo.registrar(
+        session, admin_id=admin_id, acao="excluir_usuario", entidade="usuario",
+        entidade_id=usuario_id, detalhes={"email": usuario.email, "apelido": usuario.apelido},
+    )
+    session.delete(usuario)
+    session.commit()
+    return True, "Usuário excluído. E-mail e apelido liberados para novo cadastro."
 
 
 def resetar_senha(session: Session, *, admin_id: int, usuario_id: int) -> tuple[bool, str]:

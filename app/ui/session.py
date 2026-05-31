@@ -48,6 +48,13 @@ def _ler_cookie() -> str | None:
     return None
 
 
+def cookies_detectados() -> list[str]:
+    """Lista nomes de cookies que o servidor enxerga (diagnóstico)."""
+    with contextlib.suppress(Exception):
+        return sorted(st.context.cookies.keys())
+    return []
+
+
 def current_user() -> Usuario | None:
     uid = st.session_state.get("user_id")
     if uid is None:
