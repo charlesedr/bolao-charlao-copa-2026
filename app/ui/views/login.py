@@ -1,6 +1,7 @@
 import time
 
 import streamlit as st
+import streamlit.components.v1 as components
 from sqlmodel import Session
 
 from app.core.db import engine
@@ -31,7 +32,28 @@ def render() -> None:
     st.divider()
     st.caption("Ainda não tem conta? Escolha **Cadastrar** no menu lateral.")
 
-    # Diagnóstico temporário: nomes de cookies visíveis pelo servidor
+    # Diagnóstico temporário: o que SERVIDOR vê (via cabeçalho da requisição)
     detectados = sess.cookies_detectados()
     marca = "✅" if "bolao_token" in detectados else "❌"
-    st.caption(f"🔧 diagnóstico — cookies vistos: {detectados or '(nenhum)'} · bolao_token: {marca}")
+    st.caption(
+        f"🔧 server (st.context.cookies): {detectados or '(nenhum)'} · bolao_token: {marca}"
+    )
+
+    # Diagnóstico temporário: o que o BROWSER tem (document.cookie via JS)
+    components.html(
+        """
+        <div style="color:#e8b53d; font:12px monospace; padding:4px 8px;">
+          🍪 browser (document.cookie):
+          <span id="ckdiag" style="color:#fff;">(carregando…)</span>
+        </div>
+        <script>
+          const el = document.getElementById('ckdiag');
+          try {
+            const c = document.cookie;
+            const tem = c.includes('bolao_token');
+            el.innerText = (c || '(vazio)') + '  ·  bolao_token: ' + (tem ? '✅' : '❌');
+          } catch(e) { el.innerText = 'erro: ' + e; }
+        </script>
+        """,
+        height=46,
+    )
