@@ -1,11 +1,4 @@
-"""Sessão do usuário: cookie persistente (JWT) + st.session_state.
-
-A escrita do cookie (CookieController.set) funciona — o cookie aparece no
-document.cookie do browser. O problema era a leitura: o controller fazia
-cache do valor padrão ({}) no 1º run após F5. Chamamos `refresh()` a cada
-run para re-invocar o componente; o auto-rerun do Streamlit traz o valor
-real na sequência.
-"""
+"""Sessão do usuário: cookie persistente (JWT) + st.session_state."""
 import contextlib
 
 import streamlit as st
@@ -34,9 +27,16 @@ def login_session(usuario: Usuario) -> None:
 
 
 def logout_session() -> None:
+    # Marca um flag "acabei de sair" para o próximo run pular a auto-restauração via cookie
+    st.session_state["_just_logged_out"] = True
     st.session_state.pop("user_id", None)
     with contextlib.suppress(Exception):
         _ctrl().remove(COOKIE)
+    # Limpa o cookie do cache interno do controller para evitar reler valor stale
+    with contextlib.suppress(Exception):
+        cache = st.session_state.get("cookies")
+        if isinstance(cache, dict) and COOKIE in cache:
+            del cache[COOKIE]
 
 
 def cookies_detectados() -> list[str]:
@@ -49,11 +49,15 @@ def cookies_detectados() -> list[str]:
 
 
 def current_user() -> Usuario | None:
+    # Se acabamos de sair, ignora o cookie neste run (evita auto-restauração indesejada)
+    if st.session_state.pop("_just_logged_out", False):
+        return None
+
     uid = st.session_state.get("user_id")
     if uid is None:
         with contextlib.suppress(Exception):
             ctrl = _ctrl()
-            ctrl.refresh()  # força re-leitura do componente (evita cache do default)
+            ctrl.refresh()
             token = ctrl.get(COOKIE)
             if token:
                 decoded = decodificar_token(token)

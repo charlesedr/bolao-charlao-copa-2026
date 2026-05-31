@@ -1,6 +1,8 @@
+import contextlib
 import os
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Bolão Charlão Copa 2026", page_icon="🏆", layout="centered")
 
@@ -31,6 +33,53 @@ from app.ui.views import (  # noqa: E402
 )
 
 aplicar_tema()
+
+# Estado de carregamento: no 1º run de uma sessão (após F5 ou primeira visita),
+# espera o componente de cookie sincronizar antes de montar a navegação.
+# Isso evita o popup "Page not found" quando a URL é de uma página protegida
+# e o cookie ainda não foi lido.
+_em_loading = (
+    "user_id" not in st.session_state
+    and not st.session_state.get("_session_attempted")
+    and "noload" not in st.query_params
+)
+if _em_loading:
+    st.session_state["_session_attempted"] = True
+    # Dispara o componente para sincronizar com o browser
+    with contextlib.suppress(Exception):
+        sess._ctrl().refresh()
+    st.markdown(
+        "<div style='text-align:center; padding:4rem; color:#E8B53D;'>"
+        "<h2 style='font-family:Anton,sans-serif; letter-spacing:1px;'>🏆 Carregando…</h2>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    # Fallback: se o browser não tiver o cookie, recarrega com flag p/ pular o loading
+    components.html(
+        """
+        <script>
+        setTimeout(() => {
+            try {
+                const has = document.cookie.split(';').some(
+                    c => c.trim().startsWith('bolao_token=')
+                );
+                if (!has) {
+                    const u = new URL(window.parent.location.href);
+                    if (!u.searchParams.has('noload')) {
+                        u.searchParams.set('noload', '1');
+                        window.parent.location.replace(u.toString());
+                    }
+                }
+            } catch(e) {}
+        }, 1200);
+        </script>
+        """,
+        height=0,
+    )
+    st.stop()
+
+# Garante que o flag de "session_attempted" fica setado mesmo no bypass via ?noload
+st.session_state.setdefault("_session_attempted", True)
 
 usuario = sess.current_user()
 
