@@ -1,8 +1,11 @@
+from datetime import date
+
 import streamlit as st
+from sqlalchemy import or_
 from sqlmodel import Session, select
 
 from app.core.db import engine
-from app.core.timezone import format_brt
+from app.core.timezone import format_brt, to_brt
 from app.domain.enums import FasePartida, StatusPartida
 from app.domain.models import Grupo, Partida
 from app.repositories import bet_repo, match_repo
@@ -11,29 +14,35 @@ from app.ui import helpers
 from app.ui import session as sess
 
 GRUPOS = list("ABCDEFGHIJKL")
+OPCOES_GRUPO = [*GRUPOS, "Mata-mata"]
 
 
-def _carregar(filtro: str):
+def _carregar(data_filtro: date | None, grupos_sel: list[str]):
     with Session(engine) as s:
         selecoes = match_repo.mapa_selecoes(s)
         grupos = {g.id: g.nome for g in s.exec(select(Grupo)).all()}
-        stmt = select(Partida)
-        if filtro == "Próximos jogos":
-            stmt = (
-                stmt.where(
-                    Partida.mandante_id.is_not(None),
-                    Partida.status != StatusPartida.FINALIZADO,
-                )
-                .order_by(Partida.data_hora)
-                .limit(20)
-            )
-        elif filtro == "Mata-mata":
-            stmt = stmt.where(Partida.fase != FasePartida.GRUPOS).order_by(Partida.data_hora)
-        else:  # "Grupo X"
-            letra = filtro.split()[-1]
-            gid = next((gid for gid, n in grupos.items() if n == letra), None)
-            stmt = stmt.where(Partida.grupo_id == gid).order_by(Partida.data_hora)
+        stmt = select(Partida).order_by(Partida.data_hora)
+        if grupos_sel:
+            letras = [g for g in grupos_sel if g != "Mata-mata"]
+            conds = []
+            if letras:
+                gids = [gid for gid, nome in grupos.items() if nome in letras]
+                conds.append(Partida.grupo_id.in_(gids))
+            if "Mata-mata" in grupos_sel:
+                conds.append(Partida.fase != FasePartida.GRUPOS)
+            stmt = stmt.where(or_(*conds))
         partidas = list(s.exec(stmt).all())
+
+    if data_filtro:
+        partidas = [p for p in partidas if to_brt(p.data_hora).date() == data_filtro]
+
+    # Sem nenhum filtro -> próximos 20 não-finalizados com times definidos
+    if not grupos_sel and not data_filtro:
+        partidas = [
+            p for p in partidas
+            if p.mandante_id and p.status != StatusPartida.FINALIZADO
+        ][:20]
+
     return selecoes, grupos, partidas
 
 
@@ -110,12 +119,20 @@ def _render_jogo(partida: Partida, selecoes, grupos, usuario_id: int) -> None:
 def render() -> None:
     usuario = sess.current_user()
     st.title("⚽ Palpites")
-    opcoes = ["Próximos jogos", *[f"Grupo {g}" for g in GRUPOS], "Mata-mata"]
-    filtro = st.selectbox("Mostrar", opcoes)
 
-    selecoes, grupos, partidas = _carregar(filtro)
+    c1, c2 = st.columns([1, 2])
+    data_filtro = c1.date_input("Data (opcional)", value=None, format="DD/MM/YYYY")
+    grupos_sel = c2.multiselect(
+        "Grupos / fase (opcional, pode escolher mais de um)",
+        options=OPCOES_GRUPO,
+        default=[],
+    )
+    if not data_filtro and not grupos_sel:
+        st.caption("Sem filtros: mostrando os **próximos 20 jogos** ainda não finalizados.")
+
+    selecoes, grupos, partidas = _carregar(data_filtro, grupos_sel)
     if not partidas:
-        st.info("Nenhum jogo para mostrar neste filtro.")
+        st.info("Nenhum jogo para este filtro.")
         return
     for partida in partidas:
         _render_jogo(partida, selecoes, grupos, usuario.id)
