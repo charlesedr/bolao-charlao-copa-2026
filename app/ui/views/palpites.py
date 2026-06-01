@@ -206,8 +206,9 @@ def render() -> None:
             )
             for partida in abertos:
                 _render_jogo_aberto(partida, selecoes, grupos, palpites[partida.id])
+            # Label diferente do botão de cima para evitar duplicidade de element key
             salvar_rodape = st.form_submit_button(
-                "💾 Salvar palpites marcados", use_container_width=True
+                "✅ Confirmar e salvar palpites marcados", use_container_width=True
             )
 
         if salvar_topo or salvar_rodape:
