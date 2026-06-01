@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from app.domain.enums import FasePartida, StatusPartida, TipoOrigem
 from app.domain.models import Grupo, Partida
 from app.repositories import match_repo
-from app.services import standings_service
+from app.services import scoring_service, standings_service
 
 MAPEAMENTO_PATH = Path(__file__).resolve().parents[2] / "data" / "mapeamento_terceiros.csv"
 VENCEDORES_3O = ["1A", "1B", "1D", "1E", "1G", "1I", "1K", "1L"]
@@ -97,6 +97,23 @@ def classificacao_real_grupos(session: Session) -> dict[str, list]:
     return out
 
 
+def _fp_pts_no_grupo(selecao_id: int, partidas_grupo: list[Partida]) -> int:
+    """Soma os pontos de fair play (negativos; mais alto = melhor) da seleção no grupo."""
+    total = 0
+    for p in partidas_grupo:
+        if p.mandante_id == selecao_id:
+            total += scoring_service.fair_play_points(
+                p.fp_amarelos_mandante, p.fp_verm_2amarelo_mandante,
+                p.fp_verm_direto_mandante, p.fp_amarelo_verm_mandante,
+            )
+        elif p.visitante_id == selecao_id:
+            total += scoring_service.fair_play_points(
+                p.fp_amarelos_visitante, p.fp_verm_2amarelo_visitante,
+                p.fp_verm_direto_visitante, p.fp_amarelo_verm_visitante,
+            )
+    return total
+
+
 def _resolver_slot(slot, slot_mandante_jogo, pos1, pos2, terceiro, combo):
     if not slot:
         return None
@@ -120,10 +137,25 @@ def resolver_32avos(session: Session) -> tuple[bool, str]:
     pos2 = {n: linhas[1].selecao_id for n, linhas in classif.items()}
     terceiro = {n: linhas[2].selecao_id for n, linhas in classif.items()}
 
-    # 8 melhores 3º colocados (pontos -> saldo -> gols pró -> id)
+    # Fair play points para cada 3º colocado (critério 7 FIFA — usa cartões dos jogos)
+    grupos_nomes = {g.nome: g.id for g in session.exec(select(Grupo)).all()}
+    por_grupo_id: dict[int, list[Partida]] = {}
+    for p in grupos_part:
+        por_grupo_id.setdefault(p.grupo_id, []).append(p)
+    fp_por_terceiro: dict[int, int] = {}
+    for nome, linhas in classif.items():
+        sid = linhas[2].selecao_id
+        fp_por_terceiro[sid] = _fp_pts_no_grupo(sid, por_grupo_id.get(grupos_nomes[nome], []))
+
+    # 8 melhores 3º colocados (pontos -> saldo -> gols pró -> fair play -> id)
     terceiros = [(n, linhas[2]) for n, linhas in classif.items()]
     terceiros.sort(
-        key=lambda t: (t[1].pontos, t[1].saldo, t[1].gols_pro, -t[1].selecao_id), reverse=True
+        key=lambda t: (
+            t[1].pontos, t[1].saldo, t[1].gols_pro,
+            fp_por_terceiro.get(t[1].selecao_id, 0),
+            -t[1].selecao_id,
+        ),
+        reverse=True,
     )
     melhores = sorted(n for n, _ in terceiros[:8])
     combo_key = "".join(melhores)

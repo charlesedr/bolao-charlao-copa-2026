@@ -137,6 +137,50 @@ def _aba_resultados(admin_id: int) -> None:
                 list(opcoes.keys()), index=idx, horizontal=True,
             )
             classificado_id = opcoes[escolha_cl]
+
+        # Cartões (fair play) — opcional; usado no desempate dos 3º colocados
+        with st.expander("🟨 Cartões (Fair Play) — opcional, usado em desempate dos 3º"):
+            st.caption(
+                "Preencha apenas se forem necessários para desempate. "
+                "Cada amarelo = −1, vermelho indireto (2º amarelo) = −3, "
+                "vermelho direto = −4, amarelo + vermelho direto (mesmo jogador) = −5."
+            )
+            fc1, fc2 = st.columns(2)
+            fc1.markdown(f"**{m}**")
+            fp_am_m = fc1.number_input(
+                "Cartões amarelos", min_value=0, max_value=22,
+                value=p.fp_amarelos_mandante, key=f"fp_am_m_{p.id}",
+            )
+            fp_2a_m = fc1.number_input(
+                "Vermelho por 2º amarelo (indireto)", min_value=0, max_value=11,
+                value=p.fp_verm_2amarelo_mandante, key=f"fp_2a_m_{p.id}",
+            )
+            fp_vd_m = fc1.number_input(
+                "Vermelho direto", min_value=0, max_value=11,
+                value=p.fp_verm_direto_mandante, key=f"fp_vd_m_{p.id}",
+            )
+            fp_av_m = fc1.number_input(
+                "Amarelo + Vermelho direto (mesmo jogador)", min_value=0, max_value=11,
+                value=p.fp_amarelo_verm_mandante, key=f"fp_av_m_{p.id}",
+            )
+            fc2.markdown(f"**{v}**")
+            fp_am_v = fc2.number_input(
+                "Cartões amarelos", min_value=0, max_value=22,
+                value=p.fp_amarelos_visitante, key=f"fp_am_v_{p.id}",
+            )
+            fp_2a_v = fc2.number_input(
+                "Vermelho por 2º amarelo (indireto)", min_value=0, max_value=11,
+                value=p.fp_verm_2amarelo_visitante, key=f"fp_2a_v_{p.id}",
+            )
+            fp_vd_v = fc2.number_input(
+                "Vermelho direto", min_value=0, max_value=11,
+                value=p.fp_verm_direto_visitante, key=f"fp_vd_v_{p.id}",
+            )
+            fp_av_v = fc2.number_input(
+                "Amarelo + Vermelho direto (mesmo jogador)", min_value=0, max_value=11,
+                value=p.fp_amarelo_verm_visitante, key=f"fp_av_v_{p.id}",
+            )
+
         salvar = st.form_submit_button("Salvar e recalcular", use_container_width=True)
 
     if salvar:
@@ -145,6 +189,14 @@ def _aba_resultados(admin_id: int) -> None:
                 s, admin_id=admin_id, partida_id=p.id,
                 placar_mandante=int(pm), placar_visitante=int(pv),
                 classificado_id=classificado_id, status=status,
+                fp_amarelos_mandante=int(fp_am_m),
+                fp_verm_2amarelo_mandante=int(fp_2a_m),
+                fp_verm_direto_mandante=int(fp_vd_m),
+                fp_amarelo_verm_mandante=int(fp_av_m),
+                fp_amarelos_visitante=int(fp_am_v),
+                fp_verm_2amarelo_visitante=int(fp_2a_v),
+                fp_verm_direto_visitante=int(fp_vd_v),
+                fp_amarelo_verm_visitante=int(fp_av_v),
             )
         (st.success if ok else st.error)(msg)
 

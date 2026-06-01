@@ -15,6 +15,15 @@ def lancar_placar(
     placar_visitante: int,
     classificado_id: int | None = None,
     status: str = StatusPartida.FINALIZADO,
+    # Fair play (cartões) — opcional; usados no desempate dos 3º colocados (critério 7 FIFA)
+    fp_amarelos_mandante: int = 0,
+    fp_verm_2amarelo_mandante: int = 0,
+    fp_verm_direto_mandante: int = 0,
+    fp_amarelo_verm_mandante: int = 0,
+    fp_amarelos_visitante: int = 0,
+    fp_verm_2amarelo_visitante: int = 0,
+    fp_verm_direto_visitante: int = 0,
+    fp_amarelo_verm_visitante: int = 0,
 ) -> tuple[bool, str]:
     partida = match_repo.get(session, partida_id)
     if partida is None:
@@ -46,6 +55,15 @@ def lancar_placar(
     partida.placar_visitante = placar_visitante
     partida.classificado_id = classificado_id if is_mata_mata else None
     partida.status = status
+    # Fair play
+    partida.fp_amarelos_mandante = fp_amarelos_mandante
+    partida.fp_verm_2amarelo_mandante = fp_verm_2amarelo_mandante
+    partida.fp_verm_direto_mandante = fp_verm_direto_mandante
+    partida.fp_amarelo_verm_mandante = fp_amarelo_verm_mandante
+    partida.fp_amarelos_visitante = fp_amarelos_visitante
+    partida.fp_verm_2amarelo_visitante = fp_verm_2amarelo_visitante
+    partida.fp_verm_direto_visitante = fp_verm_direto_visitante
+    partida.fp_amarelo_verm_visitante = fp_amarelo_verm_visitante
     session.add(partida)
     admin_log_repo.registrar(
         session,
