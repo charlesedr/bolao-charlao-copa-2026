@@ -23,6 +23,7 @@ from app.ui.views import (  # noqa: E402
     aposta_final,
     cadastro,
     comparar,
+    guia,
     login,
     minha_copa,
     palpites,
@@ -102,6 +103,7 @@ else:
         st.Page(tela_partida.render, title="Tela da Partida", icon="📋", url_path="partida"),
         st.Page(comparar.render, title="Comparar", icon="⚔️", url_path="comparar"),
         st.Page(perfil.render, title="Perfil", icon="👤", url_path="perfil"),
+        st.Page(guia.render, title="Guia rápido", icon="📚", url_path="guia"),
         st.Page(ajuda.render, title="Como Funciona", icon="❓", url_path="ajuda"),
     ]
     if usuario.is_admin:
