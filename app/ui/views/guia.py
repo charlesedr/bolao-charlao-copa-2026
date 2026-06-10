@@ -65,9 +65,23 @@ def render() -> None:
         st.markdown("No menu, clique em **⚽ Palpites**. Você verá os filtros no topo:")
         st.code(
             """
-┌─ Data (opcional) ─┐  ┌─ Grupos / fase ─────┐
-│   DD/MM/YYYY       │  │  escolha um ou mais │
-└────────────────────┘  └─────────────────────┘
+┌─ Data (opcional) ─┐  ┌─ Grupos / fase (pode escolher mais de um) ─┐
+│   DD/MM/YYYY       │  │  A · B · C · ... · L · Mata-mata           │
+└────────────────────┘  └────────────────────────────────────────────┘
+
+Sem filtros: mostrando os próximos 20 jogos ainda não finalizados.
+            """,
+            language="text",
+        )
+        st.markdown(
+            "Logo abaixo aparece o **resumo** do seu progresso e o botão grande de salvar:"
+        )
+        st.code(
+            """
+📅 3 de 20 jogos abertos já têm palpite. Edite os que quiser e
+   clique em [💾 Salvar palpites marcados] abaixo.
+
+[                 💾 Salvar palpites marcados                 ]
             """,
             language="text",
         )
@@ -77,27 +91,26 @@ def render() -> None:
         )
         st.code(
             """
-┌─ Grupo C · 13/06 19:00 BRT · 🟢 Não iniciado ─┐
-│                                                │
-│  ⚠️  AINDA SEM PALPITE                         │
-│                                                │
-│  Brasil   ⚽   Marrocos                         │
-│                                                │
-│  Brasil          Marrocos                      │
-│  [    2    ]     [    1    ]                   │
-│                                                │
-│  ☐ Marcar este jogo para salvar                │
-└────────────────────────────────────────────────┘
+┌─ Grupo A · 11/06 16:00 BRT · 🟢 Não iniciado ──┐
+│                                                 │
+│  ⚠️  AINDA SEM PALPITE                          │
+│                                                 │
+│  México   🌍   África do Sul                    │
+│                                                 │
+│  México         África do Sul                   │
+│  [    2    ]    [    0    ]                     │
+│                                                 │
+│  ☐ Marcar este jogo para salvar                 │
+└─────────────────────────────────────────────────┘
             """,
             language="text",
         )
         st.markdown(
-            "Edite os gols, **marque a checkbox** dos jogos que quer enviar, "
-            "e use o botão no topo ou no rodapé:"
+            "Edite os gols, **marque a checkbox ☑** dos jogos que quer enviar, "
+            "e clique em **💾 Salvar palpites marcados** (existe no topo e no rodapé)."
         )
-        st.code("[💾 Salvar palpites marcados]", language="text")
         st.success(
-            "✅ Quando salvar, o card vira verde: **✅ Já palpitado: 2 × 1**."
+            "✅ Quando salvar, o card vira verde: **✅ Já palpitado: 2 × 0**."
         )
         st.warning(
             "⚠️ **Se não marcar a checkbox, o palpite NÃO é salvo** — mesmo que você "
@@ -184,11 +197,18 @@ def render() -> None:
     # 7
     with st.container(border=True):
         st.subheader("7️⃣ Mata-mata (a partir de 28/06)")
+        st.info(
+            "ℹ️ **Antes** do admin lançar os resultados oficiais da fase de grupos, os jogos "
+            "do mata-mata aparecem com **códigos no lugar dos times** "
+            "(ex.: `(2A) 🌍 (2B)` = 2º colocado do grupo A enfrenta o 2º colocado do grupo B) e "
+            "ficam **🔒 trancados**. **Não dá pra palpitar nesse momento** — os times ainda "
+            "não foram decididos."
+        )
         st.markdown(
-            "Quando o admin lançar os resultados oficiais da fase de grupos, os jogos do "
-            "**mata-mata abrem para palpite** com os times reais que classificaram. Funciona "
-            "igual à fase de grupos, com **uma novidade**: se você palpitar **empate nos 90 minutos**, "
-            "precisa escolher **quem se classifica** nos pênaltis/prorrogação:"
+            "Quando o admin lançar os resultados, os times reais entram no lugar dos códigos "
+            "e os jogos **abrem para palpite**. Funciona igual à fase de grupos, com **uma "
+            "novidade**: se você palpitar **empate nos 90 minutos**, precisa escolher "
+            "**quem se classifica** nos pênaltis/prorrogação:"
         )
         st.code(
             """
