@@ -76,7 +76,9 @@ Esse ponto extra vale **independente de como o jogo foi decidido de verdade**
         """
 Na aba **Aposta Final**, você escolhe **campeão, vice, 3º e 4º lugar**.
 Vale **+1 ponto por acerto** em cada posição. As apostas **travam 5 minutos antes
-do jogo de disputa do 3º lugar**.
+do PRIMEIRO jogo da Copa** (11/jun/2026, 15:55 BRT) — cravar campeão antes da bola
+rolar é o coração da brincadeira. Quem se cadastrar depois do início da Copa
+não consegue mais palpitar a Aposta Final (fica 0 pontos nessa parte).
         """
     )
 

@@ -11,15 +11,25 @@ from app.services import bracket_service, scoring_service
 LIMITE_MINUTOS = 5
 
 
+def _primeiro_jogo_copa(session: Session) -> Partida | None:
+    """Primeiro jogo cronológico da Copa (jogo 1 da fase de grupos)."""
+    return session.exec(
+        select(Partida)
+        .where(Partida.fase == FasePartida.GRUPOS)
+        .order_by(Partida.data_hora)
+    ).first()
+
+
 def _partida_disputa3(session: Session) -> Partida | None:
+    """Jogo de disputa do 3º lugar (usado para apurar 3º/4º depois do jogo)."""
     return session.exec(
         select(Partida).where(Partida.fase == FasePartida.DISPUTA_3O)
     ).first()
 
 
 def aposta_aberta(session: Session) -> bool:
-    """Aberta até 5 min antes do jogo de disputa do 3º lugar (Final de Bronze)."""
-    partida = _partida_disputa3(session)
+    """Aberta até 5 min antes do PRIMEIRO jogo da Copa (jogo 1, fase de grupos)."""
+    partida = _primeiro_jogo_copa(session)
     if partida is None:
         return True
     return now_utc() < partida.data_hora - timedelta(minutes=LIMITE_MINUTOS)

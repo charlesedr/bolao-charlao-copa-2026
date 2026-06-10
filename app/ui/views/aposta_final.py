@@ -12,7 +12,8 @@ def render() -> None:
     st.title("🏅 Aposta da Classificação Final")
     st.caption(
         "Aposte em campeão, vice, 3º e 4º lugar — 1 ponto por acerto (máx. 4). "
-        "Trava 5 minutos antes do jogo de disputa do 3º lugar."
+        "**Trava 5 minutos antes do PRIMEIRO jogo da Copa** "
+        "(11/jun/2026, 15:55 BRT). Depois disso, não há como palpitar."
     )
 
     with Session(engine) as s:
