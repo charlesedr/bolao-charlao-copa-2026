@@ -62,60 +62,30 @@ def render() -> None:
     # 3
     with st.container(border=True):
         st.subheader("3️⃣ Palpitar os jogos da fase de grupos")
-        st.markdown("No menu, clique em **⚽ Palpites**. Você verá os filtros no topo:")
-        st.code(
-            """
-┌─ Data (opcional) ─┐  ┌─ Grupos / fase (pode escolher mais de um) ─┐
-│   DD/MM/YYYY       │  │  A · B · C · ... · L · Mata-mata           │
-└────────────────────┘  └────────────────────────────────────────────┘
-
-Sem filtros: mostrando os próximos 20 jogos ainda não finalizados.
-            """,
-            language="text",
-        )
         st.markdown(
-            "Logo abaixo aparece o **resumo** do seu progresso e o botão grande de salvar:"
+            "No menu, clique em **⚽ Palpites**. A tela tem **filtros no topo** "
+            "(por data e por grupo/fase), um **resumo do seu progresso** "
+            "(*\"X de Y jogos abertos já têm palpite\"*) e os **cards de cada jogo**:"
         )
-        st.code(
-            """
-📅 3 de 20 jogos abertos já têm palpite. Edite os que quiser e
-   clique em [💾 Salvar palpites marcados] abaixo.
-
-[                 💾 Salvar palpites marcados                 ]
-            """,
-            language="text",
-        )
+        st.image("assets/guia/01-palpites.png", caption="Tela Palpites — filtros, resumo, botão de salvar em lote e cards de cada jogo.")
         st.markdown(
-            "E o **card de cada jogo** com indicador colorido do status do seu palpite "
-            "(amarelo = ainda sem palpite, verde = já palpitou):"
-        )
-        st.code(
-            """
-┌─ Grupo A · 11/06 16:00 BRT · 🟢 Não iniciado ──┐
-│                                                 │
-│  ⚠️  AINDA SEM PALPITE                          │
-│                                                 │
-│  México   🌍   África do Sul                    │
-│                                                 │
-│  México         África do Sul                   │
-│  [    2    ]    [    0    ]                     │
-│                                                 │
-│  ☐ Marcar este jogo para salvar                 │
-└─────────────────────────────────────────────────┘
-            """,
-            language="text",
-        )
-        st.markdown(
-            "Edite os gols, **marque a checkbox ☑** dos jogos que quer enviar, "
-            "e clique em **💾 Salvar palpites marcados** (existe no topo e no rodapé)."
+            "**Como palpitar:**\n"
+            "1. Edite os **gols** do mandante e do visitante em cada jogo.\n"
+            "2. **Marque a checkbox ☑** *\"Marcar este jogo para salvar\"* nos jogos que quer enviar.\n"
+            "3. Clique no botão grande **💾 Salvar palpites marcados** (existe no topo e no rodapé).\n"
         )
         st.success(
-            "✅ Quando salvar, o card vira verde: **✅ Já palpitado: 2 × 0**."
+            "✅ Quando salvar, o indicador do card vira verde: **✅ Já palpitado: 2 × 0**."
         )
         st.warning(
             "⚠️ **Se não marcar a checkbox, o palpite NÃO é salvo** — mesmo que você "
             "já tenha digitado os gols. Essa é a regra de \"não palpitou = não pontua\"."
         )
+        st.markdown(
+            "**Filtro \"Mata-mata\":** dentro do dropdown de grupos tem a opção **Mata-mata** "
+            "(no rodapé da lista). Use para filtrar só os jogos eliminatórios:"
+        )
+        st.image("assets/guia/04-palpites-filtro.png", caption="Opção \"Mata-mata\" no fim do dropdown de Grupos / fase.")
 
     # 4
     with st.container(border=True):
@@ -145,44 +115,14 @@ Sem filtros: mostrando os próximos 20 jogos ainda não finalizados.
             "**11/06/2026 às 15:55 BRT**. Depois desse momento, **não tem mais como palpitar**."
         )
         st.markdown("No menu, clique em **🏅 Aposta Final** e escolha 4 seleções **diferentes**:")
-        st.code(
-            """
-┌─ 🏅 Aposta da Classificação Final ──────┐
-│                                          │
-│  🥇 Campeão                              │
-│  [ Brasil                          ▾ ]   │
-│                                          │
-│  🥈 Vice-campeão                         │
-│  [ Argentina                       ▾ ]   │
-│                                          │
-│  🥉 3º lugar                             │
-│  [ França                          ▾ ]   │
-│                                          │
-│  4️⃣  4º lugar                            │
-│  [ Espanha                         ▾ ]   │
-│                                          │
-│  [          Salvar aposta          ]     │
-└──────────────────────────────────────────┘
-            """,
-            language="text",
-        )
+        st.image("assets/guia/02-aposta-final.png", caption="Tela Aposta Final — campeão, vice, 3º e 4º lugar.")
         st.markdown("Vale **+1 ponto por acerto** em cada posição (máx. 4 pts).")
 
     # 6
     with st.container(border=True):
         st.subheader("6️⃣ Acompanhar — Ranking, Minha Copa e Tela da Partida")
         st.markdown("**🏆 Ranking** — sua posição na disputa, atualiza sozinho:")
-        st.code(
-            """
-┌─ 🏆 RANKING GERAL ───────────────────────┐
-│  #   Participante         Pts  Plc  Res  │
-│  1   Charles - Nariz      24    3    8   │
-│  2   Felipe - corinthians 20    2    7   │
-│  3   Lucas - lukas        18    1    8   │
-└──────────────────────────────────────────┘
-            """,
-            language="text",
-        )
+        st.image("assets/guia/03-ranking.png", caption="Tela Ranking geral — atualiza a cada 10 segundos.")
         st.markdown(
             "**🌎 Minha Copa** — 2 abas: **Grupos** (sua simulação dos 12 grupos a partir "
             "dos seus palpites) e **Mata-mata** (prévia das suas 32avas, ou a chave real "
@@ -202,8 +142,9 @@ Sem filtros: mostrando os próximos 20 jogos ainda não finalizados.
             "do mata-mata aparecem com **códigos no lugar dos times** "
             "(ex.: `(2A) 🌍 (2B)` = 2º colocado do grupo A enfrenta o 2º colocado do grupo B) e "
             "ficam **🔒 trancados**. **Não dá pra palpitar nesse momento** — os times ainda "
-            "não foram decididos."
+            "não foram decididos. É assim que aparece no app:"
         )
+        st.image("assets/guia/05-mata-mata-confrontos.png", caption="Mata-mata com slots não preenchidos: códigos como (2A), (2B) e cadeado 🔒.")
         st.markdown(
             "Quando o admin lançar os resultados, os times reais entram no lugar dos códigos "
             "e os jogos **abrem para palpite**. Funciona igual à fase de grupos, com **uma "
