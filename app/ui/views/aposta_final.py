@@ -20,7 +20,15 @@ def render() -> None:
     with Session(engine) as s:
         aberta = aposta_service.aposta_aberta(s)
         aposta = aposta_service.get_aposta(s, usuario.id)
+        completas, aprovados = aposta_service.contar_apostas(s)
         selecoes = sorted(match_repo.mapa_selecoes(s).values(), key=lambda x: x.nome_pt)
+
+    if aprovados > 0:
+        pct = (completas / aprovados) * 100
+        st.caption(
+            f"📊 **{completas} de {aprovados}** participantes "
+            f"({pct:.0f}%) já fizeram a Aposta Final."
+        )
 
     nomes = [x.nome_pt for x in selecoes]
     ids = [x.id for x in selecoes]

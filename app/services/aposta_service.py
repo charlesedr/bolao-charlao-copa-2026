@@ -4,8 +4,8 @@ from datetime import timedelta
 from sqlmodel import Session, select
 
 from app.core.timezone import now_utc
-from app.domain.enums import FasePartida
-from app.domain.models import ApostaClassificacaoFinal, Partida
+from app.domain.enums import FasePartida, StatusUsuario
+from app.domain.models import ApostaClassificacaoFinal, Partida, Usuario
 from app.services import bracket_service, scoring_service
 
 LIMITE_MINUTOS = 5
@@ -33,6 +33,19 @@ def aposta_aberta(session: Session) -> bool:
     if partida is None:
         return True
     return now_utc() < partida.data_hora - timedelta(minutes=LIMITE_MINUTOS)
+
+
+def contar_apostas(session: Session) -> tuple[int, int]:
+    """Retorna ``(apostas_completas, usuarios_aprovados)`` para feedback social."""
+    apostas = session.exec(select(ApostaClassificacaoFinal)).all()
+    completas = sum(
+        1 for a in apostas
+        if a.campeao_id and a.vice_id and a.terceiro_id and a.quarto_id
+    )
+    aprovados = len(
+        session.exec(select(Usuario).where(Usuario.status == StatusUsuario.APROVADO)).all()
+    )
+    return completas, aprovados
 
 
 def get_aposta(session: Session, usuario_id: int) -> ApostaClassificacaoFinal | None:
