@@ -5,13 +5,47 @@ from app.core.db import engine
 from app.core.timezone import now_utc
 from app.domain.enums import StatusUsuario
 from app.repositories import bet_repo, match_repo, user_repo
-from app.services import ranking_service
+from app.services import auth_service, ranking_service
 from app.ui import helpers
 from app.ui import session as sess
 
 
+def _form_alterar_senha(usuario_id: int, senha_temporaria: bool) -> None:
+    expand_default = senha_temporaria
+    titulo = "🔐 Alterar minha senha"
+    if senha_temporaria:
+        titulo += "  ·  ⚠️ você está usando uma senha temporária — troque agora"
+    with st.expander(titulo, expanded=expand_default):
+        if senha_temporaria:
+            st.warning(
+                "Você entrou com uma **senha temporária** gerada pelo admin. "
+                "Defina uma senha pessoal para continuar usando o app com segurança."
+            )
+        with st.form("form_alterar_senha", clear_on_submit=True):
+            senha_atual = st.text_input("Senha atual", type="password")
+            senha_nova = st.text_input("Nova senha (mín. 6 caracteres)", type="password")
+            confirmacao = st.text_input("Confirmar nova senha", type="password")
+            submetido = st.form_submit_button(
+                "Salvar nova senha", use_container_width=True, type="primary"
+            )
+        if submetido:
+            with Session(engine) as s:
+                ok, msg = auth_service.alterar_senha(
+                    s,
+                    usuario_id=usuario_id,
+                    senha_atual=senha_atual,
+                    senha_nova=senha_nova,
+                    confirmacao=confirmacao,
+                )
+            if ok:
+                st.success(msg)
+                st.rerun()
+            else:
+                st.error(msg)
+
+
 def render() -> None:
-    sess.current_user()
+    usuario_logado = sess.current_user()
     st.title("👤 Perfil do participante")
 
     with Session(engine) as s:
@@ -57,3 +91,6 @@ def render() -> None:
         st.markdown("\n".join(linhas))
     else:
         st.caption("Nenhum palpite visível ainda (jogos não iniciados).")
+
+    st.divider()
+    _form_alterar_senha(usuario_logado.id, bool(usuario_logado.senha_temporaria))

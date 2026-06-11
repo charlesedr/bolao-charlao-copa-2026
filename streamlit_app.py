@@ -118,4 +118,14 @@ if usuario is not None:
             sess.logout_session()
             st.rerun()
 
+if (
+    usuario is not None
+    and usuario.status == StatusUsuario.APROVADO
+    and getattr(usuario, "senha_temporaria", False)
+):
+    st.warning(
+        "⚠️ Você está usando uma **senha temporária**. "
+        "Vá em **👤 Perfil → 🔐 Alterar minha senha** para definir uma senha pessoal."
+    )
+
 st.navigation(paginas).run()

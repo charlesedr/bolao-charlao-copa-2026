@@ -80,6 +80,33 @@ def autenticar(
     return True, "ok", usuario
 
 
+def alterar_senha(
+    session: Session,
+    *,
+    usuario_id: int,
+    senha_atual: str,
+    senha_nova: str,
+    confirmacao: str,
+) -> tuple[bool, str]:
+    """Troca a senha do próprio usuário. Valida senha atual e confirma a nova."""
+    usuario = user_repo.get_by_id(session, usuario_id)
+    if usuario is None:
+        return False, "Usuário não encontrado."
+    if not verificar_senha(senha_atual, usuario.senha_hash):
+        return False, "Senha atual incorreta."
+    if senha_nova != confirmacao:
+        return False, "A nova senha e a confirmação não conferem."
+    if (msg := _validar_senha(senha_nova)) is not None:
+        return False, msg
+    if verificar_senha(senha_nova, usuario.senha_hash):
+        return False, "A nova senha precisa ser diferente da senha atual."
+
+    usuario.senha_hash = hash_senha(senha_nova)
+    usuario.senha_temporaria = False
+    user_repo.salvar(session, usuario)
+    return True, "Senha alterada com sucesso!"
+
+
 def mensagem_por_status(usuario: Usuario) -> str | None:
     """Mensagem de bloqueio conforme status; None se pode acessar."""
     if usuario.status == StatusUsuario.APROVADO:
