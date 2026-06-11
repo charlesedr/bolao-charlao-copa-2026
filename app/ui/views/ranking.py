@@ -25,6 +25,6 @@ def render() -> None:
     df.columns = ["#", "Nome", "Apelido", "Pontos", "Placares", "Resultados", "Gols"]
     st.dataframe(df, hide_index=True, use_container_width=True)
     st.caption(
-        "Atualiza a cada 10s. Desempate: pontos → placares exatos → "
+        "Atualizado após o final de cada partida. Desempate: pontos → placares exatos → "
         "resultados acertados → gols acertados (empate total = mesma posição)."
     )
