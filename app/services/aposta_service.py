@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from app.core.timezone import now_utc
 from app.domain.enums import FasePartida, StatusUsuario
-from app.domain.models import ApostaClassificacaoFinal, Partida, Usuario
+from app.domain.models import ApostaClassificacaoFinal, Partida, Selecao, Usuario
 from app.services import bracket_service, scoring_service
 
 LIMITE_MINUTOS = 5
@@ -33,6 +33,49 @@ def aposta_aberta(session: Session) -> bool:
     if partida is None:
         return True
     return now_utc() < partida.data_hora - timedelta(minutes=LIMITE_MINUTOS)
+
+
+def listar_apostas_completas(session: Session) -> list[dict]:
+    """Lista todas as apostas com os 4 campos preenchidos + dados do usuário e nomes
+    das seleções, ordenada por pontos desc → apelido. Usada para revelar as apostas
+    de todos depois da trava (similar ao reveal de palpites na Tela da Partida)."""
+    apostas = session.exec(select(ApostaClassificacaoFinal)).all()
+    apostas = [
+        a for a in apostas
+        if a.campeao_id and a.vice_id and a.terceiro_id and a.quarto_id
+    ]
+    if not apostas:
+        return []
+
+    user_ids = {a.usuario_id for a in apostas}
+    usuarios = {
+        u.id: u
+        for u in session.exec(select(Usuario).where(Usuario.id.in_(user_ids))).all()
+    }
+    sel_ids: set[int] = set()
+    for a in apostas:
+        sel_ids.update([a.campeao_id, a.vice_id, a.terceiro_id, a.quarto_id])
+    selecoes = {
+        s.id: s.nome_pt
+        for s in session.exec(select(Selecao).where(Selecao.id.in_(sel_ids))).all()
+    }
+
+    linhas = []
+    for a in apostas:
+        u = usuarios.get(a.usuario_id)
+        if u is None:
+            continue
+        linhas.append({
+            "apelido": u.apelido,
+            "nome": (u.nome or "").strip(),
+            "campeao": selecoes.get(a.campeao_id, "—"),
+            "vice": selecoes.get(a.vice_id, "—"),
+            "terceiro": selecoes.get(a.terceiro_id, "—"),
+            "quarto": selecoes.get(a.quarto_id, "—"),
+            "pontos": a.pontos_total or 0,
+        })
+    linhas.sort(key=lambda x: (-x["pontos"], x["apelido"].lower()))
+    return linhas
 
 
 def contar_apostas(session: Session) -> tuple[int, int]:

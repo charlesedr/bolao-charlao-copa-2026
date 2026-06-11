@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 from sqlmodel import Session
 
@@ -22,6 +23,9 @@ def render() -> None:
         aposta = aposta_service.get_aposta(s, usuario.id)
         completas, aprovados = aposta_service.contar_apostas(s)
         selecoes = sorted(match_repo.mapa_selecoes(s).values(), key=lambda x: x.nome_pt)
+        apostas_todos = (
+            aposta_service.listar_apostas_completas(s) if not aberta else []
+        )
 
     if aprovados > 0:
         pct = (completas / aprovados) * 100
@@ -96,3 +100,24 @@ def render() -> None:
 
     if aposta and aposta.pontos_total:
         st.success(f"Sua aposta já pontuou: **{aposta.pontos_total}/4**")
+
+    if not aberta:
+        st.divider()
+        st.subheader("📋 Apostas Finais de todos os participantes")
+        if not apostas_todos:
+            st.info("Ninguém registrou aposta antes da trava.")
+        else:
+            mostrar_pontos = any(linha["pontos"] > 0 for linha in apostas_todos)
+            df = pd.DataFrame(apostas_todos)
+            colunas_base = ["apelido", "nome", "campeao", "vice", "terceiro", "quarto"]
+            nomes_base = ["Apelido", "Nome", "🥇 Campeão", "🥈 Vice", "🥉 3º", "4️⃣ 4º"]
+            if mostrar_pontos:
+                colunas_base.append("pontos")
+                nomes_base.append("Pontos")
+            df = df[colunas_base]
+            df.columns = nomes_base
+            st.dataframe(df, hide_index=True, use_container_width=True)
+            st.caption(
+                f"{len(apostas_todos)} aposta(s) registrada(s) antes da trava em "
+                "11/06/2026 15:55 BRT."
+            )
