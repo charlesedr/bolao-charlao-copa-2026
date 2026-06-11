@@ -2,6 +2,7 @@ import streamlit as st
 from sqlmodel import Session
 
 from app.core.db import engine
+from app.core.timezone import format_brt
 from app.repositories import match_repo
 from app.services import aposta_service
 from app.ui import session as sess
@@ -23,9 +24,39 @@ def render() -> None:
 
     nomes = [x.nome_pt for x in selecoes]
     ids = [x.id for x in selecoes]
+    nome_por_id = {x.id: x.nome_pt for x in selecoes}
 
     def _idx(sel_id: int | None) -> int:
         return ids.index(sel_id) if sel_id in ids else 0
+
+    # Confirmação visual e persistente do estado atual da Aposta Final.
+    aposta_completa = aposta is not None and all(
+        getattr(aposta, campo, None) is not None
+        for campo in ("campeao_id", "vice_id", "terceiro_id", "quarto_id")
+    )
+    if aposta_completa:
+        atualizada_em = (
+            f" · atualizada em {format_brt(aposta.updated_at, '%d/%m/%Y %H:%M')} BRT"
+            if getattr(aposta, "updated_at", None)
+            else ""
+        )
+        st.success(
+            "✅ **Sua Aposta Final está registrada!**" + atualizada_em + "\n\n"
+            f"- 🥇 **Campeão:** {nome_por_id.get(aposta.campeao_id, '—')}\n"
+            f"- 🥈 **Vice-campeão:** {nome_por_id.get(aposta.vice_id, '—')}\n"
+            f"- 🥉 **3º lugar:** {nome_por_id.get(aposta.terceiro_id, '—')}\n"
+            f"- 4️⃣ **4º lugar:** {nome_por_id.get(aposta.quarto_id, '—')}\n\n"
+            + (
+                "Você pode editar abaixo até a trava."
+                if aberta
+                else "As apostas já estão encerradas — esta é a sua aposta final."
+            )
+        )
+    elif aberta:
+        st.info(
+            "ℹ️ **Você ainda não fez sua Aposta Final.** "
+            "Preencha os 4 campos abaixo e clique em **Salvar aposta**."
+        )
 
     if not aberta:
         st.warning("⏰ As apostas estão encerradas.")
