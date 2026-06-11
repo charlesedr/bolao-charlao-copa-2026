@@ -171,6 +171,34 @@ class PontuacaoPartida(SQLModel, table=True):
     calculado_em: datetime = Field(sa_column=_ts(nullable=False, server_default=func.now()))
 
 
+class PalpiteBracketSimulado(SQLModel, table=True):
+    """Palpite simulado do mata-mata em Minha Copa (não vale ponto, é só visualização)."""
+    __tablename__ = "palpite_bracket_simulado"
+    __table_args__ = (
+        UniqueConstraint("usuario_id", "partida_id", name="uq_brkt_sim_user_partida"),
+        CheckConstraint(
+            "placar_vencedor >= 0 AND placar_vencedor <= 30", name="ck_brkt_sim_pv"
+        ),
+        CheckConstraint(
+            "placar_perdedor >= 0 AND placar_perdedor <= 30", name="ck_brkt_sim_pp"
+        ),
+        CheckConstraint(
+            "placar_vencedor >= placar_perdedor", name="ck_brkt_sim_v_ge_p"
+        ),
+        {"extend_existing": True},
+    )
+    id: int | None = Field(default=None, primary_key=True)
+    usuario_id: int = Field(foreign_key="usuarios.id", index=True)
+    partida_id: int = Field(foreign_key="partidas.id", index=True)
+    vencedor_id: int = Field(foreign_key="selecoes.id")
+    placar_vencedor: int
+    placar_perdedor: int
+    created_at: datetime = Field(sa_column=_ts(nullable=False, server_default=func.now()))
+    updated_at: datetime = Field(
+        sa_column=_ts(nullable=False, server_default=func.now(), onupdate=func.now())
+    )
+
+
 class ApostaClassificacaoFinal(SQLModel, table=True):
     __tablename__ = "aposta_classificacao_final"
     __table_args__ = {"extend_existing": True}

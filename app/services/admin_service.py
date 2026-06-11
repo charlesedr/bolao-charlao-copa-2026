@@ -9,6 +9,7 @@ from app.domain.models import (
     ApostaClassificacaoFinal,
     DesempatePalpiteUsuario,
     Palpite,
+    PalpiteBracketSimulado,
     PontuacaoPartida,
 )
 from app.repositories import admin_log_repo, user_repo
@@ -68,7 +69,13 @@ def excluir_usuario(
     if usuario.status not in (StatusUsuario.REPROVADO, StatusUsuario.BLOQUEADO):
         return False, "Só é possível excluir usuários reprovados ou bloqueados."
 
-    for tabela in (Palpite, PontuacaoPartida, ApostaClassificacaoFinal, DesempatePalpiteUsuario):
+    for tabela in (
+        Palpite,
+        PontuacaoPartida,
+        ApostaClassificacaoFinal,
+        DesempatePalpiteUsuario,
+        PalpiteBracketSimulado,
+    ):
         session.exec(delete(tabela).where(tabela.usuario_id == usuario_id))
     admin_log_repo.registrar(
         session, admin_id=admin_id, acao="excluir_usuario", entidade="usuario",

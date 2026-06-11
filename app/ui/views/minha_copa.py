@@ -5,7 +5,7 @@ from sqlmodel import Session
 from app.core.db import engine
 from app.domain.enums import FasePartida
 from app.repositories import bet_repo, match_repo
-from app.services import simulation_service
+from app.services import bracket_sim_service, simulation_service
 from app.ui import helpers
 from app.ui import session as sess
 
@@ -17,6 +17,15 @@ FASES_MATA = [
     FasePartida.DISPUTA_3O,
     FasePartida.FINAL,
 ]
+
+LABEL_FASE_SIM = {
+    FasePartida.R32: "32avos",
+    FasePartida.OITAVAS: "Oitavas",
+    FasePartida.QUARTAS: "Quartas",
+    FasePartida.SEMIFINAL: "Semifinal",
+    FasePartida.FINAL: "Final",
+    FasePartida.DISPUTA_3O: "Disputa de 3º",
+}
 
 
 def _render_grupos(usuario_id: int) -> None:
@@ -72,24 +81,206 @@ def _render_bracket_real(s: Session, usuario_id: int) -> None:
             st.write(texto)
 
 
+def _render_fase_sim(
+    items: list[dict],
+    fase: str,
+    liberada: bool,
+    selecoes: dict,
+    usuario_id: int,
+) -> None:
+    label = LABEL_FASE_SIM.get(fase, fase)
+    n_confrontos = len(items)
+    n_palpitados = sum(
+        1 for it in items if it["palpite"] is not None and not it["dependencia_pendente"]
+    )
+    titulo = f"▼ {label} · {n_palpitados}/{n_confrontos}"
+
+    with st.expander(titulo, expanded=liberada and n_palpitados < n_confrontos):
+        if not liberada:
+            st.info(f"🔒 Complete a fase anterior para liberar **{label}**.")
+            return
+
+        for it in items:
+            partida_id = it["partida_id"]
+            codigo = it["codigo"]
+            palpite = it["palpite"]
+
+            if it["dependencia_pendente"]:
+                st.warning(
+                    f"⚠️ Jogo #{codigo}: aguardando palpite dos confrontos anteriores."
+                )
+                continue
+
+            mandante_id = it["mandante_id"]
+            visitante_id = it["visitante_id"]
+            nome_m = selecoes[mandante_id].nome_pt
+            nome_v = selecoes[visitante_id].nome_pt
+
+            with st.container(border=True):
+                cab = f"**#{codigo}** · {nome_m} 🌍 {nome_v}"
+                if palpite is not None:
+                    venc_nome = (
+                        nome_m if palpite.vencedor_id == mandante_id else nome_v
+                    )
+                    cab += (
+                        f" — ✅ {venc_nome} venceu "
+                        f"{palpite.placar_vencedor}×{palpite.placar_perdedor}"
+                    )
+                st.markdown(cab)
+
+                if palpite is not None and palpite.vencedor_id == mandante_id:
+                    default_m, default_v = palpite.placar_vencedor, palpite.placar_perdedor
+                elif palpite is not None and palpite.vencedor_id == visitante_id:
+                    default_m, default_v = palpite.placar_perdedor, palpite.placar_vencedor
+                else:
+                    default_m, default_v = 0, 0
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    gols_m = st.number_input(
+                        nome_m,
+                        key=f"sim_m_{partida_id}",
+                        min_value=0,
+                        max_value=30,
+                        value=default_m,
+                        step=1,
+                    )
+                with col2:
+                    gols_v = st.number_input(
+                        nome_v,
+                        key=f"sim_v_{partida_id}",
+                        min_value=0,
+                        max_value=30,
+                        value=default_v,
+                        step=1,
+                    )
+
+                if gols_m == gols_v:
+                    default_idx = 0
+                    if palpite is not None and palpite.vencedor_id == visitante_id:
+                        default_idx = 1
+                    st.radio(
+                        "Empate nos 90 min. Quem se classifica?",
+                        [nome_m, nome_v],
+                        index=default_idx,
+                        key=f"sim_venc_{partida_id}",
+                        horizontal=True,
+                    )
+
+                st.checkbox(
+                    "Marcar este confronto para salvar",
+                    key=f"sim_inc_{partida_id}",
+                    value=(palpite is not None),
+                )
+
+        if st.button(
+            f"💾 Salvar palpites marcados de {label}",
+            key=f"sim_save_{fase}",
+            use_container_width=True,
+        ):
+            salvos, erros = 0, 0
+            with Session(engine) as s:
+                for it in items:
+                    if it["dependencia_pendente"]:
+                        continue
+                    pid = it["partida_id"]
+                    if not st.session_state.get(f"sim_inc_{pid}"):
+                        continue
+                    gm = int(st.session_state.get(f"sim_m_{pid}", 0))
+                    gv = int(st.session_state.get(f"sim_v_{pid}", 0))
+                    nome_m = selecoes[it["mandante_id"]].nome_pt
+                    if gm == gv:
+                        venc_nome = st.session_state.get(f"sim_venc_{pid}", nome_m)
+                        venc_id = (
+                            it["mandante_id"] if venc_nome == nome_m else it["visitante_id"]
+                        )
+                    else:
+                        venc_id = it["mandante_id"] if gm > gv else it["visitante_id"]
+                    ok, _ = bracket_sim_service.salvar(
+                        s,
+                        usuario_id=usuario_id,
+                        partida_id=pid,
+                        vencedor_id=venc_id,
+                        placar_vencedor=max(gm, gv),
+                        placar_perdedor=min(gm, gv),
+                    )
+                    if ok:
+                        salvos += 1
+                    else:
+                        erros += 1
+            if salvos:
+                st.success(f"✅ {salvos} palpite(s) simulado(s) salvo(s).")
+                st.rerun()
+            elif erros:
+                st.error(f"{erros} erro(s) ao salvar.")
+            else:
+                st.warning("Nenhum confronto marcado para salvar.")
+
+
+def _render_bracket_simulado(usuario_id: int) -> None:
+    with Session(engine) as s:
+        chave = bracket_sim_service.montar_chave(s, usuario_id)
+        selecoes = match_repo.mapa_selecoes(s)
+
+    if chave["status"] == "incompleto":
+        st.info(chave["msg"])
+        return
+
+    st.caption(
+        "ℹ️ Esta é a **sua simulação** do mata-mata, construída em cima dos seus "
+        "palpites de grupos. **Não vale ponto no bolão** — é só para você cravar "
+        "como acha que a Copa vai acabar."
+    )
+
+    if chave["inconsistencias"]:
+        st.warning(
+            "⚠️ Sua simulação está desatualizada (você mudou palpites de grupos "
+            "ou de confrontos anteriores). Veja os pontos abaixo e, se quiser, "
+            "clique em **Reiniciar simulação**:\n\n- "
+            + "\n- ".join(chave["inconsistencias"])
+        )
+
+    if chave["campeao_id"]:
+        st.success(
+            f"🏆 **Seu campeão previsto:** {selecoes[chave['campeao_id']].nome_pt}"
+        )
+
+    if st.button("🔄 Reiniciar minha simulação do mata-mata", type="secondary"):
+        with Session(engine) as s:
+            n = bracket_sim_service.resetar(s, usuario_id)
+        st.toast(f"Simulação reiniciada ({n} palpite(s) removido(s)).")
+        st.rerun()
+
+    fases = chave["fases"]
+    sequencial = [
+        FasePartida.R32,
+        FasePartida.OITAVAS,
+        FasePartida.QUARTAS,
+        FasePartida.SEMIFINAL,
+    ]
+    fase_anterior_ok = True
+    for fase in sequencial:
+        items = fases.get(fase, [])
+        _render_fase_sim(items, fase, fase_anterior_ok, selecoes, usuario_id)
+        fase_anterior_ok = bracket_sim_service.fase_completa(items)
+
+    sf_ok = fase_anterior_ok
+    for fase in (FasePartida.FINAL, FasePartida.DISPUTA_3O):
+        items = fases.get(fase, [])
+        _render_fase_sim(items, fase, sf_ok, selecoes, usuario_id)
+
+
 def _render_mata(usuario_id: int) -> None:
     with Session(engine) as s:
         grupos_real = match_repo.listar(s, FasePartida.GRUPOS)
         real_finalizado = bool(grupos_real) and all(
             p.placar_mandante is not None for p in grupos_real
         )
-        if real_finalizado:
+    if real_finalizado:
+        with Session(engine) as s:
             _render_bracket_real(s, usuario_id)
-            return
-        pares, msg = simulation_service.simular_mata_mata(s, usuario_id)
-
-    if pares is None:
-        st.info(msg)
         return
-    st.caption(f"🔮 {msg}")
-    st.markdown("**Suas 32avas de final:**")
-    for par in pares:
-        st.write(f"{par['mandante']}  x  {par['visitante']}")
+    _render_bracket_simulado(usuario_id)
 
 
 def render() -> None:
