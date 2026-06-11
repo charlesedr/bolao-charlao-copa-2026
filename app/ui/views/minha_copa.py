@@ -100,89 +100,93 @@ def _render_fase_sim(
             st.info(f"🔒 Complete a fase anterior para liberar **{label}**.")
             return
 
-        for it in items:
-            partida_id = it["partida_id"]
-            codigo = it["codigo"]
-            palpite = it["palpite"]
+        pendentes = [it for it in items if it["dependencia_pendente"]]
+        prontos = [it for it in items if not it["dependencia_pendente"]]
 
-            if it["dependencia_pendente"]:
-                st.warning(
-                    f"⚠️ Jogo #{codigo}: aguardando palpite dos confrontos anteriores."
-                )
-                continue
+        for it in pendentes:
+            st.warning(
+                f"⚠️ Jogo #{it['codigo']}: aguardando palpite dos confrontos anteriores."
+            )
 
-            mandante_id = it["mandante_id"]
-            visitante_id = it["visitante_id"]
-            nome_m = selecoes[mandante_id].nome_pt
-            nome_v = selecoes[visitante_id].nome_pt
+        if not prontos:
+            return
 
-            with st.container(border=True):
-                cab = f"**#{codigo}** · {nome_m} 🌍 {nome_v}"
-                if palpite is not None:
-                    venc_nome = (
-                        nome_m if palpite.vencedor_id == mandante_id else nome_v
-                    )
-                    cab += (
-                        f" — ✅ {venc_nome} venceu "
-                        f"{palpite.placar_vencedor}×{palpite.placar_perdedor}"
-                    )
-                st.markdown(cab)
+        # Tudo dentro de st.form: widgets NÃO disparam rerun a cada interação.
+        # Só o form_submit_button gera UM rerun (no clique em Salvar).
+        with st.form(key=f"sim_form_{fase}", clear_on_submit=False):
+            for it in prontos:
+                partida_id = it["partida_id"]
+                codigo = it["codigo"]
+                palpite = it["palpite"]
+                mandante_id = it["mandante_id"]
+                visitante_id = it["visitante_id"]
+                nome_m = selecoes[mandante_id].nome_pt
+                nome_v = selecoes[visitante_id].nome_pt
 
-                if palpite is not None and palpite.vencedor_id == mandante_id:
-                    default_m, default_v = palpite.placar_vencedor, palpite.placar_perdedor
-                elif palpite is not None and palpite.vencedor_id == visitante_id:
-                    default_m, default_v = palpite.placar_perdedor, palpite.placar_vencedor
-                else:
-                    default_m, default_v = 0, 0
+                with st.container(border=True):
+                    cab = f"**#{codigo}** · {nome_m} 🌍 {nome_v}"
+                    if palpite is not None:
+                        venc_nome = (
+                            nome_m if palpite.vencedor_id == mandante_id else nome_v
+                        )
+                        cab += (
+                            f" — ✅ {venc_nome} venceu "
+                            f"{palpite.placar_vencedor}×{palpite.placar_perdedor}"
+                        )
+                    st.markdown(cab)
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    gols_m = st.number_input(
-                        nome_m,
-                        key=f"sim_m_{partida_id}",
-                        min_value=0,
-                        max_value=30,
-                        value=default_m,
-                        step=1,
-                    )
-                with col2:
-                    gols_v = st.number_input(
-                        nome_v,
-                        key=f"sim_v_{partida_id}",
-                        min_value=0,
-                        max_value=30,
-                        value=default_v,
-                        step=1,
-                    )
+                    if palpite is not None and palpite.vencedor_id == mandante_id:
+                        default_m, default_v = palpite.placar_vencedor, palpite.placar_perdedor
+                        default_venc_idx = 0
+                    elif palpite is not None and palpite.vencedor_id == visitante_id:
+                        default_m, default_v = palpite.placar_perdedor, palpite.placar_vencedor
+                        default_venc_idx = 1
+                    else:
+                        default_m, default_v = 0, 0
+                        default_venc_idx = 0
 
-                if gols_m == gols_v:
-                    default_idx = 0
-                    if palpite is not None and palpite.vencedor_id == visitante_id:
-                        default_idx = 1
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.number_input(
+                            nome_m,
+                            key=f"sim_m_{partida_id}",
+                            min_value=0, max_value=30, step=1,
+                            value=default_m,
+                        )
+                    with col2:
+                        st.number_input(
+                            nome_v,
+                            key=f"sim_v_{partida_id}",
+                            min_value=0, max_value=30, step=1,
+                            value=default_v,
+                        )
+
+                    # Radio sempre presente (forms não reagem a mudanças de valor):
+                    # só é usado quando o placar empata.
                     st.radio(
-                        "Empate nos 90 min. Quem se classifica?",
+                        "Em caso de empate, quem se classifica?",
                         [nome_m, nome_v],
-                        index=default_idx,
+                        index=default_venc_idx,
                         key=f"sim_venc_{partida_id}",
                         horizontal=True,
                     )
 
-                st.checkbox(
-                    "Marcar este confronto para salvar",
-                    key=f"sim_inc_{partida_id}",
-                    value=(palpite is not None),
-                )
+                    st.checkbox(
+                        "Marcar este confronto para salvar",
+                        key=f"sim_inc_{partida_id}",
+                        value=(palpite is not None),
+                    )
 
-        if st.button(
-            f"💾 Salvar palpites marcados de {label}",
-            key=f"sim_save_{fase}",
-            use_container_width=True,
-        ):
+            submitted = st.form_submit_button(
+                f"💾 Salvar palpites marcados de {label}",
+                use_container_width=True,
+                type="primary",
+            )
+
+        if submitted:
             salvos, erros = 0, 0
             with Session(engine) as s:
-                for it in items:
-                    if it["dependencia_pendente"]:
-                        continue
+                for it in prontos:
                     pid = it["partida_id"]
                     if not st.session_state.get(f"sim_inc_{pid}"):
                         continue
@@ -209,12 +213,12 @@ def _render_fase_sim(
                     else:
                         erros += 1
             if salvos:
-                st.success(f"✅ {salvos} palpite(s) simulado(s) salvo(s).")
+                st.toast(f"✅ {salvos} palpite(s) simulado(s) salvo(s).")
                 st.rerun()
             elif erros:
                 st.error(f"{erros} erro(s) ao salvar.")
             else:
-                st.warning("Nenhum confronto marcado para salvar.")
+                st.toast("⚠️ Nenhum confronto marcado para salvar.")
 
 
 def _render_bracket_simulado(usuario_id: int) -> None:
