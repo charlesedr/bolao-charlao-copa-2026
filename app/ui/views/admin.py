@@ -1,12 +1,14 @@
 import re
+from datetime import date
 
 import streamlit as st
+from sqlalchemy import or_
 from sqlmodel import Session, select
 
 from app.core.db import engine
-from app.core.timezone import format_brt
+from app.core.timezone import format_brt, to_brt
 from app.domain.enums import FasePartida, StatusPartida, StatusUsuario
-from app.domain.models import Partida
+from app.domain.models import Grupo, Partida
 from app.repositories import match_repo, user_repo
 from app.services import admin_service, bracket_service, match_service
 from app.ui import helpers
@@ -17,6 +19,9 @@ STATUS_LABEL = {
     StatusPartida.EM_ANDAMENTO: "Em andamento",
     StatusPartida.FINALIZADO: "Finalizado",
 }
+
+GRUPOS = list("ABCDEFGHIJKL")
+OPCOES_GRUPO = [*GRUPOS, "Mata-mata"]
 
 
 def _aba_usuarios(admin_id: int) -> None:
@@ -91,19 +96,48 @@ def _aba_usuarios(admin_id: int) -> None:
                     st.error(msg)
 
 
+def _filtrar_partidas_admin(data_filtro: date | None, grupos_sel: list[str]) -> list[Partida]:
+    with Session(engine) as s:
+        grupos = {g.id: g.nome for g in s.exec(select(Grupo)).all()}
+        stmt = (
+            select(Partida)
+            .where(Partida.mandante_id.is_not(None))
+            .order_by(Partida.data_hora)
+        )
+        if grupos_sel:
+            letras = [g for g in grupos_sel if g != "Mata-mata"]
+            conds = []
+            if letras:
+                gids = [gid for gid, nome in grupos.items() if nome in letras]
+                conds.append(Partida.grupo_id.in_(gids))
+            if "Mata-mata" in grupos_sel:
+                conds.append(Partida.fase != FasePartida.GRUPOS)
+            stmt = stmt.where(or_(*conds))
+        partidas = list(s.exec(stmt).all())
+
+    if data_filtro:
+        partidas = [p for p in partidas if to_brt(p.data_hora).date() == data_filtro]
+    return partidas
+
+
 def _aba_resultados(admin_id: int) -> None:
+    fc1, fc2 = st.columns([1, 2])
+    data_filtro = fc1.date_input(
+        "Data (opcional)", value=None, format="DD/MM/YYYY", key="adm_res_data"
+    )
+    grupos_sel = fc2.multiselect(
+        "Grupos / fase (opcional, pode escolher mais de um)",
+        options=OPCOES_GRUPO,
+        default=[],
+        key="adm_res_grupos",
+    )
+
     with Session(engine) as s:
         selecoes = match_repo.mapa_selecoes(s)
-        partidas = list(
-            s.exec(
-                select(Partida)
-                .where(Partida.mandante_id.is_not(None))
-                .order_by(Partida.data_hora)
-            ).all()
-        )
 
+    partidas = _filtrar_partidas_admin(data_filtro, grupos_sel)
     if not partidas:
-        st.info("Nenhuma partida com times definidos ainda.")
+        st.info("Nenhuma partida para este filtro.")
         return
 
     rotulos = [
