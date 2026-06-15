@@ -57,11 +57,16 @@ def render() -> None:
         st.info("Nenhum jogo encontrado com esse filtro.")
         return
 
-    rotulos = {
-        f"{p.codigo} · {helpers.label_partida(p, selecoes)}": p.id for p in partidas
-    }
-    escolha = st.selectbox("Escolha o jogo", list(rotulos.keys()))
-    pid = rotulos[escolha]
+    rotulos = [
+        (f"{p.codigo} · {helpers.label_partida(p, selecoes)}", p.id) for p in partidas
+    ]
+    indice_default = helpers.indice_partida_default(partidas, prefer_em_andamento=True)
+    escolha = st.selectbox(
+        "Escolha o jogo",
+        options=[r[0] for r in rotulos],
+        index=indice_default,
+    )
+    pid = next(pid for label, pid in rotulos if label == escolha)
 
     with Session(engine) as s:
         p = match_repo.get(s, pid)

@@ -106,14 +106,23 @@ def _aba_resultados(admin_id: int) -> None:
         st.info("Nenhuma partida com times definidos ainda.")
         return
 
-    rotulos = {
-        f"{p.codigo} · {helpers.nome_time(selecoes, p.mandante_id, p.slot_mandante)} x "
-        f"{helpers.nome_time(selecoes, p.visitante_id, p.slot_visitante)} · "
-        f"{format_brt(p.data_hora)}": p
+    rotulos = [
+        (
+            f"{p.codigo} · {helpers.nome_time(selecoes, p.mandante_id, p.slot_mandante)} x "
+            f"{helpers.nome_time(selecoes, p.visitante_id, p.slot_visitante)} · "
+            f"{format_brt(p.data_hora)}",
+            p,
+        )
         for p in partidas
-    }
-    escolha = st.selectbox("Partida", list(rotulos.keys()))
-    p = rotulos[escolha]
+    ]
+    # Em andamento primeiro, senão a próxima a começar.
+    indice_default = helpers.indice_partida_default(partidas, prefer_em_andamento=True)
+    escolha = st.selectbox(
+        "Partida",
+        options=[r[0] for r in rotulos],
+        index=indice_default,
+    )
+    p = next(p for label, p in rotulos if label == escolha)
     is_mm = p.fase != FasePartida.GRUPOS
     m = helpers.nome_time(selecoes, p.mandante_id, p.slot_mandante)
     v = helpers.nome_time(selecoes, p.visitante_id, p.slot_visitante)
