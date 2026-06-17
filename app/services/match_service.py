@@ -1,9 +1,13 @@
 """Lançamento de placar oficial e recálculo de pontuação."""
 from sqlmodel import Session
 
+from app.core.timezone import now_utc
 from app.domain.enums import FasePartida, StatusPartida
 from app.repositories import admin_log_repo, bet_repo, match_repo
 from app.services import aposta_service, bracket_service, scoring_service
+
+ORIGEM_MANUAL = "manual"
+ORIGEM_AUTO = "auto"
 
 
 def lancar_placar(
@@ -24,7 +28,10 @@ def lancar_placar(
     fp_verm_2amarelo_visitante: int = 0,
     fp_verm_direto_visitante: int = 0,
     fp_amarelo_verm_visitante: int = 0,
+    origem: str = ORIGEM_MANUAL,
 ) -> tuple[bool, str]:
+    """``origem`` = "manual" (admin pelo form) ou "auto" (cron ESPN). Auto NÃO
+    sobrescreve registros marcados como manual — a checagem é feita pelo caller."""
     partida = match_repo.get(session, partida_id)
     if partida is None:
         return False, "Partida não encontrada."
@@ -64,22 +71,30 @@ def lancar_placar(
     partida.fp_verm_2amarelo_visitante = fp_verm_2amarelo_visitante
     partida.fp_verm_direto_visitante = fp_verm_direto_visitante
     partida.fp_amarelo_verm_visitante = fp_amarelo_verm_visitante
+    partida.dados_origem = origem
+    partida.dados_sincronizado_em = now_utc()
+    if origem == ORIGEM_MANUAL:
+        # Lançamento manual limpa o snapshot ESPN (não há mais divergência pendente).
+        partida.placar_espn_mandante = None
+        partida.placar_espn_visitante = None
     session.add(partida)
-    admin_log_repo.registrar(
-        session,
-        admin_id=admin_id,
-        acao="lancar_placar",
-        entidade="partida",
-        entidade_id=partida_id,
-        detalhes={
-            "antes": antes,
-            "depois": {
-                "placar_mandante": placar_mandante,
-                "placar_visitante": placar_visitante,
-                "status": str(status),
+    # Log só para ações humanas; auto-sync já fica auditado em dados_sincronizado_em.
+    if origem == ORIGEM_MANUAL:
+        admin_log_repo.registrar(
+            session,
+            admin_id=admin_id,
+            acao="lancar_placar",
+            entidade="partida",
+            entidade_id=partida_id,
+            detalhes={
+                "antes": antes,
+                "depois": {
+                    "placar_mandante": placar_mandante,
+                    "placar_visitante": placar_visitante,
+                    "status": str(status),
+                },
             },
-        },
-    )
+        )
     session.commit()
     recalcular_partida(session, partida_id)
 

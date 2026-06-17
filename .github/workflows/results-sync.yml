@@ -1,0 +1,48 @@
+name: Sincronizar resultados ESPN
+
+# Roda a cada 10 minutos durante a janela da Copa (11/06 a 19/07/2026)
+# e também pode ser disparado manualmente.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      dias_atras:
+        description: "Quantos dias atrás consultar"
+        required: false
+        default: "1"
+      dry_run:
+        description: "Só conta o que faria, sem aplicar"
+        required: false
+        default: "false"
+
+# Evita rodar duas instâncias ao mesmo tempo se o cron atrasar.
+concurrency:
+  group: results-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Rodar sync
+        env:
+          ENV: prod
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.PROD_SECRET_KEY }}
+        run: |
+          ARGS="--dias-atras ${{ github.event.inputs.dias_atras || '1' }}"
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          python scripts/sync_results.py $ARGS

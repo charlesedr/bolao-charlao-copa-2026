@@ -10,7 +10,7 @@ from app.core.timezone import format_brt, to_brt
 from app.domain.enums import FasePartida, StatusPartida, StatusUsuario
 from app.domain.models import Grupo, Partida
 from app.repositories import match_repo, user_repo
-from app.services import admin_service, bracket_service, match_service
+from app.services import admin_service, bracket_service, match_service, results_sync_service
 from app.ui import helpers
 from app.ui import session as sess
 
@@ -161,7 +161,71 @@ def _aba_resultados(admin_id: int) -> None:
     m = helpers.nome_time(selecoes, p.mandante_id, p.slot_mandante)
     v = helpers.nome_time(selecoes, p.visitante_id, p.slot_visitante)
 
-    st.caption("Lance o placar dos **90 minutos** (prorrogação/pênaltis só definem o classificado).")
+    # Badge de origem dos dados desta partida + alerta de divergência ESPN.
+    if p.dados_origem == match_service.ORIGEM_MANUAL:
+        sync_em = (
+            format_brt(p.dados_sincronizado_em, "%d/%m %H:%M")
+            if p.dados_sincronizado_em else "—"
+        )
+        st.caption(f"🤚 **Origem:** lançado manualmente · última edição {sync_em} BRT")
+    elif p.dados_origem == match_service.ORIGEM_AUTO:
+        sync_em = (
+            format_brt(p.dados_sincronizado_em, "%d/%m %H:%M")
+            if p.dados_sincronizado_em else "—"
+        )
+        st.caption(
+            f"🤖 **Origem:** auto-importado da ESPN · última sync {sync_em} BRT"
+        )
+    if p.placar_espn_mandante is not None and p.placar_espn_visitante is not None:
+        st.warning(
+            f"⚠️ **ESPN diverge do seu lançamento manual.** "
+            f"Você gravou **{p.placar_mandante}×{p.placar_visitante}**, "
+            f"ESPN reporta **{p.placar_espn_mandante}×{p.placar_espn_visitante}**.\n\n"
+            "Se a ESPN estiver certa, clique no botão abaixo para aplicar. "
+            "Se a sua versão estiver certa, ignore — não vou sobrescrever."
+        )
+        if st.button(
+            f"📥 Aplicar placar da ESPN ({p.placar_espn_mandante}×{p.placar_espn_visitante})",
+            key=f"aplicar_espn_{p.id}",
+        ):
+            with Session(engine) as s:
+                ok, msg = match_service.lancar_placar(
+                    s, admin_id=admin_id, partida_id=p.id,
+                    placar_mandante=p.placar_espn_mandante,
+                    placar_visitante=p.placar_espn_visitante,
+                    status=p.status,
+                    classificado_id=p.classificado_id,
+                    fp_amarelos_mandante=p.fp_amarelos_mandante,
+                    fp_verm_2amarelo_mandante=p.fp_verm_2amarelo_mandante,
+                    fp_verm_direto_mandante=p.fp_verm_direto_mandante,
+                    fp_amarelo_verm_mandante=p.fp_amarelo_verm_mandante,
+                    fp_amarelos_visitante=p.fp_amarelos_visitante,
+                    fp_verm_2amarelo_visitante=p.fp_verm_2amarelo_visitante,
+                    fp_verm_direto_visitante=p.fp_verm_direto_visitante,
+                    fp_amarelo_verm_visitante=p.fp_amarelo_verm_visitante,
+                    origem=match_service.ORIGEM_MANUAL,
+                )
+            (st.success if ok else st.error)(msg)
+            st.rerun()
+
+    cs1, cs2 = st.columns([2, 1])
+    cs1.caption(
+        "Lance o placar dos **90 minutos** "
+        "(prorrogação/pênaltis só definem o classificado)."
+    )
+    if cs2.button("🔄 Sincronizar com ESPN agora", key=f"sync_agora_{p.id}"):
+        with Session(engine) as s:
+            stats = results_sync_service.sincronizar(s, dias_atras=1, dias_a_frente=1)
+        if stats["atualizados"] or stats["divergencias_manual"]:
+            st.success(
+                f"✅ {stats['atualizados']} atualizadas · "
+                f"{stats['divergencias_manual']} divergência(s) flagged."
+            )
+        elif stats["erros"]:
+            st.error(f"Erros: {stats['erros']}")
+        else:
+            st.info("Nada novo da ESPN.")
+        st.rerun()
     with st.form("form_resultado"):
         c1, c2 = st.columns(2)
         pm = c1.number_input(m, min_value=0, max_value=30, value=p.placar_mandante or 0)

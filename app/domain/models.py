@@ -101,6 +101,13 @@ class Partida(SQLModel, table=True):
 
     estadio: str | None = Field(default=None, max_length=80)
     cidade: str | None = Field(default=None, max_length=60)
+
+    # Sincronização automática via ESPN ("auto") vs override manual do admin ("manual")
+    dados_origem: str | None = Field(default=None, max_length=10)
+    dados_sincronizado_em: datetime | None = Field(default=None, sa_column=_ts(nullable=True))
+    placar_espn_mandante: int | None = None
+    placar_espn_visitante: int | None = None
+
     created_at: datetime = Field(sa_column=_ts(nullable=False, server_default=func.now()))
     updated_at: datetime = Field(
         sa_column=_ts(nullable=False, server_default=func.now(), onupdate=func.now())
