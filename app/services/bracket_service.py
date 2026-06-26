@@ -124,6 +124,82 @@ def _resolver_slot(slot, slot_mandante_jogo, pos1, pos2, terceiro, combo):
     return pos1[grupo] if posicao == "1" else pos2[grupo]
 
 
+def _resolver_slot_direto(slot: str | None, pos1: dict[str, int], pos2: dict[str, int]) -> int | None:
+    """Resolve apenas slots diretos (1A/2B). Terceiros dependem da combinacao final."""
+    if not slot or len(slot) < 2 or slot.startswith("3"):
+        return None
+    posicao, grupo = slot[0], slot[1]
+    if posicao == "1":
+        return pos1.get(grupo)
+    if posicao == "2":
+        return pos2.get(grupo)
+    return None
+
+
+def _classificacao_grupos_finalizados(session: Session) -> dict[str, list]:
+    """Classificacao real somente dos grupos com todos os jogos finalizados."""
+    grupos = {g.id: g.nome for g in session.exec(select(Grupo)).all()}
+    partidas = match_repo.listar(session, FasePartida.GRUPOS)
+    por_grupo: dict[int, list[Partida]] = {}
+    for p in partidas:
+        por_grupo.setdefault(p.grupo_id, []).append(p)
+
+    out: dict[str, list] = {}
+    for gid, nome in grupos.items():
+        jogos_g = por_grupo.get(gid, [])
+        if not jogos_g or any(
+            p.status != StatusPartida.FINALIZADO
+            or p.placar_mandante is None
+            or p.placar_visitante is None
+            for p in jogos_g
+        ):
+            continue
+        times = sorted(
+            {p.mandante_id for p in jogos_g if p.mandante_id}
+            | {p.visitante_id for p in jogos_g if p.visitante_id}
+        )
+        jogos = [
+            (p.mandante_id, p.visitante_id, p.placar_mandante, p.placar_visitante)
+            for p in jogos_g
+        ]
+        out[nome] = standings_service.classificar_grupo(times, jogos)
+    return out
+
+
+def resolver_32avos_parcial(session: Session) -> tuple[int, str]:
+    """Preenche partes seguras das 32avas conforme grupos reais ja finalizados."""
+    ok, msg = resolver_32avos(session)
+    if ok:
+        return 16, msg
+
+    classif = _classificacao_grupos_finalizados(session)
+    if not classif:
+        return 0, "Nenhum grupo finalizado para preencher as 32avas."
+
+    pos1 = {n: linhas[0].selecao_id for n, linhas in classif.items()}
+    pos2 = {n: linhas[1].selecao_id for n, linhas in classif.items()}
+
+    atualizadas = 0
+    r32 = [p for p in match_repo.listar(session) if p.fase == FasePartida.R32]
+    for p in r32:
+        mudou = False
+        mandante_id = _resolver_slot_direto(p.slot_mandante, pos1, pos2)
+        visitante_id = _resolver_slot_direto(p.slot_visitante, pos1, pos2)
+        if mandante_id is not None and p.mandante_id != mandante_id:
+            p.mandante_id = mandante_id
+            mudou = True
+        if visitante_id is not None and p.visitante_id != visitante_id:
+            p.visitante_id = visitante_id
+            mudou = True
+        if mudou:
+            session.add(p)
+            atualizadas += 1
+
+    if atualizadas:
+        session.commit()
+    return atualizadas, f"32avos atualizadas parcialmente ({atualizadas} jogo(s))."
+
+
 def resolver_32avos(session: Session) -> tuple[bool, str]:
     """Preenche as 32avas (1º/2º + 8 melhores 3º) quando a fase de grupos termina."""
     grupos_part = match_repo.listar(session, FasePartida.GRUPOS)

@@ -9,7 +9,7 @@ from app.core.timezone import format_brt, to_brt
 from app.domain.enums import FasePartida, StatusPartida
 from app.domain.models import Grupo, Partida
 from app.repositories import bet_repo, match_repo
-from app.services import bet_service
+from app.services import bet_service, bracket_service
 from app.ui import helpers
 from app.ui import session as sess
 
@@ -19,6 +19,10 @@ OPCOES_GRUPO = [*GRUPOS, "Mata-mata"]
 
 def _carregar(data_filtro: date | None, grupos_sel: list[str]):
     with Session(engine) as s:
+        inclui_mata = "Mata-mata" in grupos_sel
+        if inclui_mata:
+            bracket_service.resolver_32avos_parcial(s)
+
         selecoes = match_repo.mapa_selecoes(s)
         grupos = {g.id: g.nome for g in s.exec(select(Grupo)).all()}
         stmt = select(Partida).order_by(Partida.data_hora)
@@ -35,6 +39,12 @@ def _carregar(data_filtro: date | None, grupos_sel: list[str]):
 
     if data_filtro:
         partidas = [p for p in partidas if to_brt(p.data_hora).date() == data_filtro]
+    if "Mata-mata" in grupos_sel:
+        partidas = [
+            p
+            for p in partidas
+            if p.fase == FasePartida.GRUPOS or (p.mandante_id and p.visitante_id)
+        ]
 
     if not grupos_sel and not data_filtro:
         partidas = [
@@ -183,6 +193,9 @@ def render() -> None:
 
     selecoes, grupos, partidas = _carregar(data_filtro, grupos_sel)
     if not partidas:
+        if grupos_sel == ["Mata-mata"]:
+            st.info("Nenhum confronto de mata-mata definido com os dois times ainda.")
+            return
         st.info("Nenhum jogo para este filtro.")
         return
 

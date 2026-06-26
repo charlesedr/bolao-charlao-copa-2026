@@ -2,7 +2,7 @@ from datetime import datetime
 
 from app.domain.enums import FasePartida
 from app.domain.models import Partida
-from app.services.bracket_service import vencedor_perdedor
+from app.services.bracket_service import _resolver_slot_direto, vencedor_perdedor
 
 DT = datetime(2026, 7, 4, 18, 0)
 
@@ -36,3 +36,12 @@ def test_empate_sem_classificado():
 
 def test_sem_placar():
     assert vencedor_perdedor(_p(None, None)) == (None, None)
+
+
+def test_resolver_slot_direto_posicoes_1_e_2():
+    assert _resolver_slot_direto("1A", {"A": 10}, {"A": 20}) == 10
+    assert _resolver_slot_direto("2A", {"A": 10}, {"A": 20}) == 20
+
+
+def test_resolver_slot_direto_nao_resolve_terceiros():
+    assert _resolver_slot_direto("3:A/B/C", {"A": 10}, {"A": 20}) is None
