@@ -65,38 +65,34 @@ def _render_grupos(usuario_id: int) -> None:
 
     for nome, info in resultado.items():
         st.subheader(f"Grupo {nome}")
-        col_palpites, col_hibrido = st.columns(2)
+        st.markdown("**Seus palpites**")
+        _render_tabela_classificacao(
+            info,
+            selecoes,
+            (
+                "⚠️ Palpite em todos os jogos do grupo para simular "
+                f"({info['palpitados']}/{info['total_jogos']})."
+            ),
+        )
 
-        with col_palpites:
-            st.markdown("**Seus palpites**")
-            _render_tabela_classificacao(
-                info,
-                selecoes,
-                (
-                    "⚠️ Palpite em todos os jogos do grupo para simular "
-                    f"({info['palpitados']}/{info['total_jogos']})."
-                ),
+        st.markdown("**Real + projeção**")
+        info_hibrido = hibrido.get(nome)
+        if info_hibrido is None:
+            st.caption("⚠️ Grupo sem dados para projetar.")
+            continue
+        if info_hibrido["completo"]:
+            st.caption(
+                f"Oficiais: {info_hibrido['oficiais']} · "
+                f"Projetados: {info_hibrido['projetados']}"
             )
-
-        with col_hibrido:
-            st.markdown("**Real + projeção**")
-            info_hibrido = hibrido.get(nome)
-            if info_hibrido is None:
-                st.caption("⚠️ Grupo sem dados para projetar.")
-                continue
-            if info_hibrido["completo"]:
-                st.caption(
-                    f"Oficiais: {info_hibrido['oficiais']} · "
-                    f"Projetados: {info_hibrido['projetados']}"
-                )
-            _render_tabela_classificacao(
-                info_hibrido,
-                selecoes,
-                (
-                    "⚠️ Faltam palpites nos jogos sem resultado oficial "
-                    f"({info_hibrido['pendentes']} pendente(s))."
-                ),
-            )
+        _render_tabela_classificacao(
+            info_hibrido,
+            selecoes,
+            (
+                "⚠️ Faltam palpites nos jogos sem resultado oficial "
+                f"({info_hibrido['pendentes']} pendente(s))."
+            ),
+        )
 
     st.caption("✅ classificados (1º e 2º) · 🟡 3º colocado (pode avançar como um dos 8 melhores)")
 
