@@ -1,10 +1,40 @@
 """Simulação da Copa pelo usuário ("Minha Copa") — derivada dos palpites do usuário."""
 from sqlmodel import Session, select
 
-from app.domain.enums import FasePartida
+from app.domain.enums import FasePartida, StatusPartida
 from app.domain.models import Grupo, Palpite, Partida, Selecao
 from app.repositories import match_repo
 from app.services import bracket_service, standings_service
+
+
+def _jogo_grupo_hibrido(
+    partida: Partida, palpite: Palpite | None
+) -> tuple[standings_service.Jogo | None, str]:
+    """Usa placar oficial finalizado; senao, usa o palpite do usuario."""
+    if partida.mandante_id is None or partida.visitante_id is None:
+        return None, "pendente"
+
+    if (
+        partida.status == StatusPartida.FINALIZADO
+        and partida.placar_mandante is not None
+        and partida.placar_visitante is not None
+    ):
+        return (
+            partida.mandante_id,
+            partida.visitante_id,
+            partida.placar_mandante,
+            partida.placar_visitante,
+        ), "oficial"
+
+    if palpite is None:
+        return None, "pendente"
+
+    return (
+        partida.mandante_id,
+        partida.visitante_id,
+        palpite.gols_mandante,
+        palpite.gols_visitante,
+    ), "palpite"
 
 
 def simular_grupos(session: Session, usuario_id: int) -> tuple[dict, dict[int, Selecao]]:
@@ -59,6 +89,57 @@ def simular_grupos(session: Session, usuario_id: int) -> tuple[dict, dict[int, S
     return resultado, selecoes
 
 
+def simular_grupos_hibrido(session: Session, usuario_id: int) -> tuple[dict, dict[int, Selecao]]:
+    """Classifica grupos com jogos oficiais + palpites nos jogos ainda nao finalizados."""
+    grupos = {g.id: g.nome for g in session.exec(select(Grupo)).all()}
+    selecoes = {s.id: s for s in session.exec(select(Selecao)).all()}
+    partidas = session.exec(
+        select(Partida).where(Partida.fase == FasePartida.GRUPOS)
+    ).all()
+    palpites = {
+        p.partida_id: p
+        for p in session.exec(select(Palpite).where(Palpite.usuario_id == usuario_id)).all()
+    }
+
+    por_grupo: dict[int, list[Partida]] = {}
+    for p in partidas:
+        por_grupo.setdefault(p.grupo_id, []).append(p)
+
+    resultado: dict[str, dict] = {}
+    for gid, nome in sorted(grupos.items(), key=lambda x: x[1]):
+        jogos_grupo = por_grupo.get(gid, [])
+        times = sorted(
+            {p.mandante_id for p in jogos_grupo if p.mandante_id}
+            | {p.visitante_id for p in jogos_grupo if p.visitante_id}
+        )
+
+        jogos: list[standings_service.Jogo] = []
+        oficiais = 0
+        projetados = 0
+        pendentes = 0
+        for p in jogos_grupo:
+            jogo, origem = _jogo_grupo_hibrido(p, palpites.get(p.id))
+            if jogo is None:
+                pendentes += 1
+                continue
+            jogos.append(jogo)
+            if origem == "oficial":
+                oficiais += 1
+            else:
+                projetados += 1
+
+        completo = len(jogos_grupo) > 0 and pendentes == 0 and len(jogos) == len(jogos_grupo)
+        resultado[nome] = {
+            "completo": completo,
+            "linhas": standings_service.classificar_grupo(times, jogos) if completo else None,
+            "total_jogos": len(jogos_grupo),
+            "oficiais": oficiais,
+            "projetados": projetados,
+            "pendentes": pendentes,
+        }
+    return resultado, selecoes
+
+
 def simular_mata_mata(
     session: Session, usuario_id: int
 ) -> tuple[list[dict] | None, str]:
@@ -67,9 +148,12 @@ def simular_mata_mata(
     Retorna (lista de pares {codigo, mandante, visitante, mandante_id, visitante_id}, msg)
     ou (None, motivo) se faltar palpite em algum grupo.
     """
-    grupos, selecoes = simular_grupos(session, usuario_id)
+    grupos, selecoes = simular_grupos_hibrido(session, usuario_id)
     if not all(info["completo"] for info in grupos.values()):
-        return None, "Complete os palpites de TODOS os grupos para simular o mata-mata."
+        return None, (
+            "Complete os palpites dos jogos de grupo que ainda nao tem resultado "
+            "oficial para simular o mata-mata."
+        )
 
     pos1 = {n: info["linhas"][0].selecao_id for n, info in grupos.items()}
     pos2 = {n: info["linhas"][1].selecao_id for n, info in grupos.items()}
@@ -106,5 +190,4 @@ def simular_mata_mata(
                 "visitante": selecoes[vid].nome_pt if vid in selecoes else "?",
             }
         )
-    return pares, f"Prévia conforme suas previsões (3º: {', '.join(melhores)})."
-
+    return pares, f"Previa com resultados oficiais + seus palpites (3os: {', '.join(melhores)})."

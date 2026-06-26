@@ -1,8 +1,8 @@
 """Bracket simulado em Minha Copa — cascata sobre as partidas do mata-mata.
 
 Não vale ponto no bolão. Os palpites reais (que pontuam) ficam em ``Palpite``
-e dependem dos times oficiais. Este serviço usa os palpites de grupos do
-usuário para determinar os times das 32avas e, em cima disso, deixa o
+e dependem dos times oficiais. Este serviço usa resultados oficiais dos grupos
+e os palpites restantes para determinar os times das 32avas e, em cima disso, deixa o
 usuário escolher vencedor + placar de cada confronto. O vencedor vira
 mandante/visitante do confronto seguinte (cascata).
 """
@@ -36,12 +36,12 @@ def _palpites_por_partida(session: Session, usuario_id: int) -> dict[int, Palpit
 
 def _resolver_r32(session: Session, usuario_id: int) -> tuple[dict[int, tuple[int, int]] | None, str]:
     """Para cada partida das 32avas, retorna (mandante_id, visitante_id) a partir
-    da classificação simulada dos grupos. Retorna None se grupos incompletos."""
-    grupos, _ = simulation_service.simular_grupos(session, usuario_id)
+    da classificacao hibrida dos grupos. Retorna None se grupos incompletos."""
+    grupos, _ = simulation_service.simular_grupos_hibrido(session, usuario_id)
     if not all(info["completo"] for info in grupos.values()):
         return None, (
-            "Você ainda não palpitou todos os jogos da fase de grupos. "
-            "Complete os palpites de TODOS os grupos para liberar o mata-mata aqui."
+            "Falta palpite em jogo de grupo que ainda nao tem resultado oficial. "
+            "Complete esses palpites para liberar o mata-mata aqui."
         )
 
     pos1 = {n: info["linhas"][0].selecao_id for n, info in grupos.items()}

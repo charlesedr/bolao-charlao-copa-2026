@@ -28,35 +28,75 @@ LABEL_FASE_SIM = {
 }
 
 
+def _df_classificacao(info: dict, selecoes: dict) -> pd.DataFrame:
+    linhas = []
+    for i, linha in enumerate(info["linhas"], start=1):
+        marca = "✅" if i <= 2 else ("🟡" if i == 3 else "")
+        nome_sel = selecoes[linha.selecao_id].nome_pt if linha.selecao_id in selecoes else "?"
+        linhas.append(
+            {
+                "#": i,
+                "Seleção": f"{marca} {nome_sel}".strip(),
+                "P": linha.pontos,
+                "J": linha.jogos,
+                "V": linha.vitorias,
+                "SG": linha.saldo,
+                "GP": linha.gols_pro,
+            }
+        )
+    return pd.DataFrame(linhas)
+
+
+def _render_tabela_classificacao(info: dict, selecoes: dict, msg_incompleto: str) -> None:
+    if not info["completo"]:
+        st.caption(msg_incompleto)
+        return
+    st.dataframe(_df_classificacao(info, selecoes), hide_index=True, use_container_width=True)
+
+
 def _render_grupos(usuario_id: int) -> None:
-    st.caption("Classificação simulada a partir dos **seus palpites** da fase de grupos.")
+    st.caption(
+        "À esquerda: seus palpites puros. À direita: resultados oficiais já finalizados "
+        "+ seus palpites nos jogos restantes."
+    )
     with Session(engine) as s:
         resultado, selecoes = simulation_service.simular_grupos(s, usuario_id)
+        hibrido, _ = simulation_service.simular_grupos_hibrido(s, usuario_id)
 
     for nome, info in resultado.items():
         st.subheader(f"Grupo {nome}")
-        if not info["completo"]:
-            st.caption(
-                f"⚠️ Palpite em todos os jogos do grupo para simular "
-                f"({info['palpitados']}/{info['total_jogos']})."
+        col_palpites, col_hibrido = st.columns(2)
+
+        with col_palpites:
+            st.markdown("**Seus palpites**")
+            _render_tabela_classificacao(
+                info,
+                selecoes,
+                (
+                    "⚠️ Palpite em todos os jogos do grupo para simular "
+                    f"({info['palpitados']}/{info['total_jogos']})."
+                ),
             )
-            continue
-        linhas = []
-        for i, linha in enumerate(info["linhas"], start=1):
-            marca = "✅" if i <= 2 else ("🟡" if i == 3 else "")
-            nome_sel = selecoes[linha.selecao_id].nome_pt if linha.selecao_id in selecoes else "?"
-            linhas.append(
-                {
-                    "#": i,
-                    "Seleção": f"{marca} {nome_sel}".strip(),
-                    "P": linha.pontos,
-                    "J": linha.jogos,
-                    "V": linha.vitorias,
-                    "SG": linha.saldo,
-                    "GP": linha.gols_pro,
-                }
+
+        with col_hibrido:
+            st.markdown("**Real + projeção**")
+            info_hibrido = hibrido.get(nome)
+            if info_hibrido is None:
+                st.caption("⚠️ Grupo sem dados para projetar.")
+                continue
+            if info_hibrido["completo"]:
+                st.caption(
+                    f"Oficiais: {info_hibrido['oficiais']} · "
+                    f"Projetados: {info_hibrido['projetados']}"
+                )
+            _render_tabela_classificacao(
+                info_hibrido,
+                selecoes,
+                (
+                    "⚠️ Faltam palpites nos jogos sem resultado oficial "
+                    f"({info_hibrido['pendentes']} pendente(s))."
+                ),
             )
-        st.dataframe(pd.DataFrame(linhas), hide_index=True, use_container_width=True)
 
     st.caption("✅ classificados (1º e 2º) · 🟡 3º colocado (pode avançar como um dos 8 melhores)")
 
@@ -232,14 +272,14 @@ def _render_bracket_simulado(usuario_id: int) -> None:
 
     st.caption(
         "ℹ️ Esta é a **sua simulação** do mata-mata, construída em cima dos seus "
-        "palpites de grupos. **Não vale ponto no bolão** — é só para você cravar "
-        "como acha que a Copa vai acabar."
+        "resultados oficiais dos grupos + seus palpites nos jogos restantes. "
+        "**Não vale ponto no bolão** — é só para você cravar como acha que a Copa vai acabar."
     )
 
     if chave["inconsistencias"]:
         st.warning(
             "⚠️ Sua simulação está desatualizada (você mudou palpites de grupos "
-            "ou de confrontos anteriores). Veja os pontos abaixo e, se quiser, "
+            "ou a classificação real/projetada mudou). Veja os pontos abaixo e, se quiser, "
             "clique em **Reiniciar simulação**:\n\n- "
             + "\n- ".join(chave["inconsistencias"])
         )
